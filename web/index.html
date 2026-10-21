@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e9eef1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f161c" media="(prefers-color-scheme: dark)">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>CW Practice Desk</title>
+<style>
+/* Layout: operating desk. Header with a keying lamp, tab strip, work surface on the left, settings rack on the right (stacks on phones). */
+:root {
+  --bg: #e9eef1;
+  --surface: #ffffff;
+  --sunk: #f3f6f8;
+  --ink: #15212b;
+  --muted: #586874;
+  --line: #d2dae0;
+  --accent: #e08a12;
+  --accent-ink: #8c4d00;
+  --on-accent: #1c1204;
+  --good: #1d7548;
+  --good-bg: #e3f3ea;
+  --bad: #b02a20;
+  --bad-bg: #fbe7e4;
+  --lamp-off: #c9d1d7;
+  --f-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f161c; --surface: #162029; --sunk: #111a21; --ink: #e3eaef; --muted: #8d9ca8; --line: #263440;
+    --accent: #f2a23c; --accent-ink: #f6b766; --on-accent: #1c1204;
+    --good: #52c58e; --good-bg: #12301f; --bad: #ff8073; --bad-bg: #3a1a17; --lamp-off: #2b3943;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f161c; --surface: #162029; --sunk: #111a21; --ink: #e3eaef; --muted: #8d9ca8; --line: #263440;
+  --accent: #f2a23c; --accent-ink: #f6b766; --on-accent: #1c1204;
+  --good: #52c58e; --good-bg: #12301f; --bad: #ff8073; --bad-bg: #3a1a17; --lamp-off: #2b3943;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.app { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+h1, h2, h3 { font-family: var(--f-display); font-stretch: 78%; text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
+h2 { font-size: 1.5rem; font-weight: 750; }
+h3 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 0.875rem; }
+
+/* header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); font-weight: 800; text-transform: uppercase; line-height: 1; }
+.brand .sub { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.15em; margin-top: 4px; }
+.lamp {
+  width: 22px; height: 22px; border-radius: 50%; flex: none;
+  background: var(--lamp-off); border: 2px solid var(--line);
+  transition: background 15ms linear, box-shadow 15ms linear;
+}
+.lamp.on { background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 18px var(--accent); }
+.readout {
+  font-family: var(--f-mono); font-size: 0.85rem; font-variant-numeric: tabular-nums;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 6px 12px; display: flex; gap: 12px; flex-wrap: wrap;
+}
+.readout b { color: var(--accent-ink); font-weight: 600; }
+
+/* tabs */
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); overflow-x: auto; }
+.tab {
+  font-family: var(--f-display); font-stretch: 85%; font-weight: 650; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em;
+  background: none; border: 0; color: var(--muted); padding: 10px 14px; cursor: pointer; white-space: nowrap;
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (min-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) 300px; } .rack { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); } }
+@media (max-width: 899px) { .rack { order: -1; } }
+
+.panel { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* controls */
+button { font: inherit; }
+.btn {
+  font-family: var(--f-body); font-weight: 700; font-size: 0.95rem;
+  border: 1px solid var(--line); background: var(--sunk); color: var(--ink);
+  padding: 9px 16px; border-radius: var(--r); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.sm { padding: 5px 10px; font-size: 0.85rem; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 70%, transparent); outline-offset: 2px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.spacer { flex: 1; }
+kbd { font-family: var(--f-mono); font-size: 0.75rem; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--sunk); }
+
+textarea, input[type="text"] {
+  width: 100%; font-family: var(--f-mono); font-size: 1.1rem; letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--sunk); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px;
+}
+textarea { min-height: 120px; resize: vertical; line-height: 1.7; }
+textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+textarea.plain { text-transform: none; letter-spacing: 0.02em; }
+
+/* lesson */
+.lesson-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.stepper button { background: var(--sunk); border: 0; width: 38px; height: 40px; cursor: pointer; color: var(--ink); font-size: 1.2rem; }
+.stepper button:hover { background: var(--line); }
+.stepper output { min-width: 64px; text-align: center; font-family: var(--f-display); font-stretch: 80%; font-weight: 800; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-family: var(--f-mono); font-weight: 600; font-size: 0.95rem; min-width: 32px; height: 32px; padding: 0 6px;
+  display: inline-grid; place-items: center; border-radius: 4px; border: 1px solid var(--line); background: var(--sunk); color: var(--ink); cursor: pointer;
+}
+.chip:hover { border-color: var(--muted); }
+.chip.new { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.chip.locked { opacity: 0.35; }
+
+.progress { height: 6px; background: var(--sunk); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.progress > div { height: 100%; width: 0%; background: var(--accent); }
+.status { font-family: var(--f-mono); font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* results */
+.score { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.score .pct { font-family: var(--f-display); font-stretch: 75%; font-weight: 800; font-size: 3rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .pct.pass { color: var(--good); }
+.score .pct.fail { color: var(--bad); }
+.verdict { font-weight: 700; }
+.groups { display: flex; flex-wrap: wrap; gap: 8px 14px; font-family: var(--f-mono); font-size: 1rem; }
+.grp { display: flex; flex-direction: column; gap: 2px; }
+.grp .s { color: var(--muted); letter-spacing: 0.12em; }
+.grp .r { letter-spacing: 0.12em; }
+.grp .r .x { background: var(--bad-bg); color: var(--bad); border-radius: 2px; }
+.grp .r .miss { color: var(--bad); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 700; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.tablewrap { overflow-x: auto; }
+.pill { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
+.pill.pass { background: var(--good-bg); color: var(--good); }
+.pill.fail { background: var(--bad-bg); color: var(--bad); }
+
+/* word drill */
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; width: fit-content; max-width: 100%; }
+.seg button { border: 0; background: var(--sunk); color: var(--muted); padding: 8px 14px; cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.board {
+  min-height: 118px; border-radius: var(--r); background: var(--sunk); border: 1px dashed var(--line);
+  display: grid; place-items: center; text-align: center; padding: 14px;
+}
+.board .big { font-family: var(--f-mono); font-weight: 600; font-size: clamp(1.8rem, 6vw, 2.6rem); letter-spacing: 0.12em; overflow-wrap: anywhere; }
+.board.ok { background: var(--good-bg); border: 1px solid var(--good); }
+.board.ok .big { color: var(--good); }
+.board.no { background: var(--bad-bg); border: 1px solid var(--bad); }
+.board.no .big { color: var(--bad); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.stat { border-top: 2px solid var(--line); padding-top: 6px; }
+.stat .v { font-family: var(--f-display); font-stretch: 78%; font-weight: 800; font-size: 1.6rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .k { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+@media (max-width: 480px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+label.check { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; font-size: 0.95rem; }
+input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; }
+
+/* morse glyphs */
+.code { display: inline-flex; gap: 3px; align-items: center; }
+.code i { display: block; height: 6px; background: currentColor; border-radius: 3px; }
+.code i.dit { width: 6px; }
+.code i.dah { width: 18px; }
+.tape { display: flex; flex-wrap: wrap; gap: 10px 4px; padding: 12px; background: var(--sunk); border: 1px solid var(--line); border-radius: var(--r); min-height: 70px; }
+.cell { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 5px; border-radius: 4px; color: var(--ink); }
+.cell .c { font-family: var(--f-mono); font-weight: 600; font-size: 0.95rem; }
+.cell .code { color: var(--muted); }
+.cell.gap { width: 14px; }
+.cell.now { background: var(--accent); color: var(--on-accent); }
+.cell.now .code { color: var(--on-accent); }
+
+/* chart */
+.chart { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.key {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left;
+  border: 1px solid var(--line); background: var(--sunk); color: var(--ink); border-radius: var(--r); padding: 10px 12px; cursor: pointer; position: relative;
+}
+.key:hover { border-color: var(--accent); }
+.key .c { font-family: var(--f-mono); font-weight: 600; font-size: 1.3rem; line-height: 1; }
+.key .code { color: var(--accent-ink); }
+.key .n { position: absolute; top: 8px; right: 9px; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.key .lbl { position: absolute; top: 9px; right: 9px; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.04em; }
+.key.playing { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.key.playing .code, .key.playing .n, .key.playing .lbl { color: var(--on-accent); }
+
+/* settings rack */
+.rack { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.rack summary {
+  list-style: none; cursor: pointer; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--f-display); font-stretch: 85%; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.rack summary::-webkit-details-marker { display: none; }
+.rack summary::after { content: "+"; font-family: var(--f-mono); color: var(--muted); }
+.rack[open] summary::after { content: "−"; }
+.rack .body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field .lab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.9rem; font-weight: 700; }
+.field .val { font-family: var(--f-mono); font-weight: 600; color: var(--accent-ink); font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.field .hint { font-size: 0.78rem; color: var(--muted); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.divider { height: 1px; background: var(--line); }
+
+@media (prefers-reduced-motion: reduce) { .lamp { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <span class="lamp" id="lamp" aria-hidden="true"></span>
+      <div>
+        <h1>CW Practice Desk</h1>
+        <div class="sub" aria-hidden="true">-.-. .-- &nbsp; .--. .-. .- -.-. - .. -.-. .</div>
+      </div>
+    </div>
+    <div class="readout" id="readout" aria-live="polite"></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Training modes">
+    <button class="tab" role="tab" id="t-koch" data-tab="koch" aria-selected="true">Koch lessons</button>
+    <button class="tab" role="tab" id="t-words" data-tab="words" aria-selected="false">Word drill</button>
+    <button class="tab" role="tab" id="t-text" data-tab="text" aria-selected="false">Play text</button>
+    <button class="tab" role="tab" id="t-chart" data-tab="chart" aria-selected="false">Code chart</button>
+  </nav>
+
+  <div class="layout">
+    <main>
+      <!-- KOCH -->
+      <section class="panel" id="p-koch" role="tabpanel" aria-labelledby="t-koch">
+        <div class="card">
+          <div class="lesson-head">
+            <h2>Lesson</h2>
+            <div class="stepper">
+              <button id="lessonDown" aria-label="Previous lesson">−</button>
+              <output id="lessonNum">1</output>
+              <button id="lessonUp" aria-label="Next lesson">+</button>
+            </div>
+            <p class="muted small" id="lessonInfo"></p>
+          </div>
+          <div class="chips" id="kochChips"></div>
+          <p class="muted small">Tap a character to hear it. The highlighted one is new in this lesson. Copy random groups, then check your copy. Reach 90% to move up a lesson.</p>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <button class="btn primary" id="kochStart">▶ Start session</button>
+            <button class="btn" id="kochStop" disabled>■ Stop</button>
+            <span class="spacer"></span>
+            <span class="status" id="kochStatus">Ready</span>
+          </div>
+          <div class="progress"><div id="kochBar"></div></div>
+          <label for="kochInput" class="small muted">Type what you hear. Leave a space between groups.</label>
+          <textarea id="kochInput" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="KMKKM MMKMK …"></textarea>
+          <div class="row">
+            <button class="btn" id="kochCheck">Check copy</button>
+            <span class="muted small">Checking stops playback and scores only the groups that were sent.</span>
+          </div>
+        </div>
+
+        <div class="card" id="kochResult" hidden></div>
+
+        <div class="card">
+          <h3>Recent sessions</h3>
+          <div class="tablewrap"><table id="historyTable"></table></div>
+        </div>
+      </section>
+
+      <!-- WORDS -->
+      <section class="panel" id="p-words" role="tabpanel" aria-labelledby="t-words" hidden>
+        <div class="card">
+          <div class="seg" id="wordMode" role="group" aria-label="What to drill">
+            <button data-mode="words" aria-pressed="true">Common words</button>
+            <button data-mode="calls" aria-pressed="false">Callsigns</button>
+            <button data-mode="abbr" aria-pressed="false">Ham abbreviations</button>
+            <button data-mode="chars" aria-pressed="false">Lesson characters</button>
+          </div>
+          <div class="board" id="wordBoard"><div><div class="big" id="wordBig">? ? ?</div><div class="muted small" id="wordSub">Press Play, listen, type what you heard, then Enter.</div></div></div>
+          <input type="text" id="wordInput" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Type and press Enter">
+          <div class="row">
+            <button class="btn primary" id="wordPlay">▶ Play</button>
+            <button class="btn" id="wordReplay">↻ Replay</button>
+            <button class="btn" id="wordSkip">Skip</button>
+            <span class="spacer"></span>
+            <label class="check"><input type="checkbox" id="adaptive"> Adaptive speed</label>
+          </div>
+          <p class="muted small">Enter submits. Empty Enter replays. <kbd>Esc</kbd> stops sound. With adaptive speed on, each correct copy adds 1 wpm and each miss takes 1 away.</p>
+          <div class="stats">
+            <div class="stat"><div class="v" id="stOk">0</div><div class="k">Correct</div></div>
+            <div class="stat"><div class="v" id="stTried">0</div><div class="k">Tried</div></div>
+            <div class="stat"><div class="v" id="stStreak">0</div><div class="k">Streak</div></div>
+            <div class="stat"><div class="v" id="stBest">0</div><div class="k">Best streak</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEXT -->
+      <section class="panel" id="p-text" role="tabpanel" aria-labelledby="t-text" hidden>
+        <div class="card">
+          <label for="textInput"><h3>Text to send</h3></label>
+          <textarea id="textInput" class="plain" spellcheck="false">CQ CQ CQ DE N0CALL N0CALL K
+UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
+          <div class="row">
+            <button class="btn primary" id="textPlay">▶ Play</button>
+            <button class="btn" id="textStop" disabled>■ Stop</button>
+            <span class="spacer"></span>
+            <label class="check"><input type="checkbox" id="textHide"> Hide tape while playing</label>
+          </div>
+          <div class="progress"><div id="textBar"></div></div>
+          <div class="tape" id="tape" aria-label="Morse rendering of the text"></div>
+          <p class="muted small" id="textInfo"></p>
+        </div>
+      </section>
+
+      <!-- CHART -->
+      <section class="panel" id="p-chart" role="tabpanel" aria-labelledby="t-chart" hidden>
+        <div class="card">
+          <h3>Letters</h3><div class="chart" id="chLetters"></div>
+          <h3>Numbers</h3><div class="chart" id="chNumbers"></div>
+          <h3>Punctuation and prosigns</h3><div class="chart" id="chPunct"></div>
+          <p class="muted small">Small numbers show where a character appears in the Koch order. Learn characters by their sound, not by counting dots.</p>
+        </div>
+      </section>
+    </main>
+
+    <details class="rack" id="rack" open>
+      <summary>Speed and tone</summary>
+      <div class="body">
+        <div class="presets">
+          <button class="btn sm" data-preset="20,8">Learn 20/8</button>
+          <button class="btn sm" data-preset="20,12">20/12</button>
+          <button class="btn sm" data-preset="20,20">20/20</button>
+          <button class="btn sm" data-preset="30,30">30/30</button>
+        </div>
+        <div class="field">
+          <div class="lab"><label for="wpm">Character speed</label><span class="val" id="wpmV"></span></div>
+          <input type="range" id="wpm" min="5" max="60" step="1">
+          <span class="hint">How fast each letter is keyed.</span>
+        </div>
+        <div class="field">
+          <div class="lab"><label for="eff">Effective speed</label><span class="val" id="effV"></span></div>
+          <input type="range" id="eff" min="3" max="60" step="1">
+          <span class="hint">Farnsworth spacing: letters stay fast, gaps between them get longer.</span>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <div class="lab"><label for="tone">Tone</label><span class="val" id="toneV"></span></div>
+          <input type="range" id="tone" min="300" max="1200" step="10">
+        </div>
+        <div class="field">
+          <div class="lab"><label for="vol">Volume</label><span class="val" id="volV"></span></div>
+          <input type="range" id="vol" min="0" max="100" step="1">
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <div class="lab"><label for="grp">Group size</label><span class="val" id="grpV"></span></div>
+          <input type="range" id="grp" min="1" max="10" step="1">
+        </div>
+        <div class="field">
+          <div class="lab"><label for="mins">Session length</label><span class="val" id="minsV"></span></div>
+          <input type="range" id="mins" min="0.5" max="10" step="0.5">
+        </div>
+        <button class="btn sm" id="testTone">▶ Test: PARIS</button>
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+(() => {
+  const MORSE = {
+    A: ".-", B: "-...", C: "-.-.", D: "-..", E: ".", F: "..-.", G: "--.", H: "....", I: "..", J: ".---",
+    K: "-.-", L: ".-..", M: "--", N: "-.", O: "---", P: ".--.", Q: "--.-", R: ".-.", S: "...", T: "-",
+    U: "..-", V: "...-", W: ".--", X: "-..-", Y: "-.--", Z: "--..",
+    "0": "-----", "1": ".----", "2": "..---", "3": "...--", "4": "....-", "5": ".....", "6": "-....", "7": "--...", "8": "---..", "9": "----.",
+    ".": ".-.-.-", ",": "--..--", "?": "..--..", "/": "-..-.", "=": "-...-", "+": ".-.-.", "-": "-....-", "'": ".----.",
+    "!": "-.-.--", "(": "-.--.", ")": "-.--.-", ":": "---...", ";": "-.-.-.", "@": ".--.-.", '"': ".-..-."
+  };
+  const PROSIGN = { "=": "BT", "+": "AR" };
+  // LCWO Koch order: lesson n uses the first n+1 characters.
+  const KOCH = "KMURESNAPTLWI.JZ=FOY,VG5/Q92H38B?47C1D60X".split("");
+  const MAX_LESSON = KOCH.length - 1;
+
+  const WORDS = ("THE OF AND TO IN IS YOU THAT IT HE WAS FOR ON ARE AS WITH HIS THEY AT BE THIS HAVE FROM OR ONE HAD BY WORD BUT NOT WHAT ALL WERE WE WHEN YOUR CAN SAID THERE USE EACH WHICH SHE DO HOW THEIR IF WILL UP OTHER ABOUT OUT MANY THEN THEM THESE SO SOME HER WOULD MAKE LIKE HIM INTO TIME HAS LOOK TWO MORE WRITE GO SEE NUMBER NO WAY COULD PEOPLE MY THAN FIRST WATER BEEN CALL WHO OIL NOW FIND LONG DOWN DAY DID GET COME MADE MAY PART OVER NEW SOUND TAKE ONLY LITTLE WORK KNOW PLACE YEAR LIVE BACK GIVE MOST VERY AFTER THING OUR JUST NAME GOOD SENTENCE MAN THINK SAY GREAT WHERE HELP THROUGH MUCH BEFORE LINE RIGHT TOO MEAN OLD ANY SAME TELL BOY FOLLOW CAME WANT SHOW ALSO AROUND FORM THREE SMALL SET PUT END WELL LARGE MUST BIG EVEN SUCH BECAUSE TURN HERE WHY ASK WENT MEN READ NEED LAND DIFFERENT HOME MOVE TRY KIND HAND PICTURE AGAIN CHANGE OFF PLAY SPELL AIR AWAY ANIMAL HOUSE POINT PAGE LETTER MOTHER ANSWER FOUND STUDY STILL LEARN SHOULD WORLD HIGH").split(" ");
+  const ABBR = "CQ DE K KN AR SK BK R TU TNX FB OM YL UR RST 599 73 88 ES HR QTH QSL QRZ QRM QRN QSB QSY QRS QRQ QRT QRP NAME OP WX ANT RIG PWR GM GA GE CUL HW AGN PSE SRI ABT BURO DX".split(" ");
+  const PREFIXES = ["W","K","N","AA","KD","KE","KB","VE","G","M","2E","DL","DK","F","I","IK","EA","S5","9A","OE","OK","OM","SP","HA","YU","JA","VK","ZL","PY","LU","ON","PA","OH","SM","LA","OZ","EI","HB9","LY","YO"];
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  // ---------- settings ----------
+  const DEFAULTS = { wpm: 20, eff: 10, tone: 600, vol: 60, grp: 5, mins: 1, lesson: 1, tab: "koch", wordMode: "words", adaptive: false, textHide: false };
+  const S = Object.assign({}, DEFAULTS, load("cwdesk.settings", {}));
+  let history = load("cwdesk.history", []);
+  function load(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }
+  function save() { try { localStorage.setItem("cwdesk.settings", JSON.stringify(S)); localStorage.setItem("cwdesk.history", JSON.stringify(history.slice(0, 50))); } catch {} }
+
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ---------- timing + audio ----------
+  function timings() {
+    const c = S.wpm, s = Math.min(S.eff, c);
+    const dot = 1.2 / c;
+    let cs = 3 * dot, ws = 7 * dot;
+    if (s < c) { const ta = (60 * c - 37.2 * s) / (s * c); cs = 3 * ta / 19; ws = 7 * ta / 19; }
+    return { dot, cs, ws };
+  }
+  function schedule(text) {
+    const { dot, cs, ws } = timings();
+    const marks = [], chars = [];
+    let t = 0, prevChar = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i].toUpperCase();
+      if (/\s/.test(ch)) { if (prevChar) { t += ws - cs; prevChar = false; } continue; }
+      const code = MORSE[ch];
+      if (!code) continue;
+      chars.push({ i, t });
+      for (let k = 0; k < code.length; k++) {
+        const d = code[k] === "." ? dot : 3 * dot;
+        marks.push([t, t + d]);
+        t += d;
+        if (k < code.length - 1) t += dot;
+      }
+      t += cs; prevChar = true;
+    }
+    return { marks, chars, total: t };
+  }
+
+  let ac = null;
+  function audio() {
+    if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    return ac;
+  }
+  const P = { token: 0, osc: null, gain: null, t0: 0, sched: null, raf: 0, onEnd: null, onTick: null };
+  const lamp = $("lamp");
+
+  function play(text, { onEnd, onTick } = {}) {
+    stop();
+    const sched = schedule(text);
+    if (!sched.marks.length) { onEnd && onEnd(true); return null; }
+    const ctx = audio();
+    const tok = ++P.token;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = S.tone;
+    const g = ctx.createGain();
+    g.gain.value = 0;
+    osc.connect(g).connect(ctx.destination);
+    const t0 = ctx.currentTime + 0.08;
+    const vol = (S.vol / 100) * 0.5;
+    const r = Math.min(0.005, timings().dot / 4);
+    g.gain.setValueAtTime(0, t0);
+    for (const [a, b] of sched.marks) {
+      g.gain.setValueAtTime(0, t0 + a);
+      g.gain.linearRampToValueAtTime(vol, t0 + a + r);
+      g.gain.setValueAtTime(vol, t0 + b - r);
+      g.gain.linearRampToValueAtTime(0, t0 + b);
+    }
+    osc.start(t0);
+    osc.stop(t0 + sched.total + 0.05);
+    Object.assign(P, { osc, gain: g, t0, sched, onEnd, onTick });
+    osc.onended = () => {
+      if (tok !== P.token) return;
+      const cb = P.onEnd; cleanup(); cb && cb(true);
+    };
+    let mi = 0;
+    const loop = () => {
+      if (tok !== P.token) return;
+      const now = ctx.currentTime - t0;
+      while (mi < sched.marks.length && sched.marks[mi][1] < now) mi++;
+      const m = sched.marks[mi];
+      lamp.classList.toggle("on", !!m && now >= m[0] && now <= m[1]);
+      P.onTick && P.onTick(Math.max(0, now), sched);
+      P.raf = requestAnimationFrame(loop);
+    };
+    P.raf = requestAnimationFrame(loop);
+    return sched;
+  }
+  function cleanup() {
+    P.token++;
+    cancelAnimationFrame(P.raf);
+    lamp.classList.remove("on");
+    P.osc = null; P.gain = null; P.onEnd = null; P.onTick = null;
+  }
+  function stop() {
+    if (!P.osc) return;
+    try {
+      P.gain.gain.cancelScheduledValues(0);
+      P.gain.gain.setValueAtTime(0, ac.currentTime);
+      P.osc.stop();
+    } catch {}
+    const cb = P.onEnd; cleanup(); cb && cb(false);
+  }
+
+  const codeHTML = code => `<span class="code" aria-label="${code.replace(/\./g, "dit ").replace(/-/g, "dah ").trim()}">${code.split("").map(s => `<i class="${s === "." ? "dit" : "dah"}"></i>`).join("")}</span>`;
+  const fmtTime = s => { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+  const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- settings UI ----------
+  const fields = {
+    wpm: v => `${v} wpm`, eff: v => `${Math.min(v, S.wpm)} wpm`, tone: v => `${v} Hz`, vol: v => `${v}%`,
+    grp: v => `${v} char${v > 1 ? "s" : ""}`, mins: v => `${v} min`
+  };
+  function syncSettings() {
+    for (const k in fields) { $(k).value = S[k]; $(k + "V").textContent = fields[k](S[k]); }
+    const { dot } = timings();
+    $("readout").innerHTML = `<span><b>${S.wpm}</b> wpm</span><span>eff <b>${Math.min(S.eff, S.wpm)}</b></span><span><b>${S.tone}</b> Hz</span><span>dit <b>${Math.round(dot * 1000)}</b> ms</span>`;
+  }
+  for (const k in fields) {
+    $(k).addEventListener("input", e => {
+      S[k] = parseFloat(e.target.value);
+      if (k === "wpm" && S.eff > S.wpm) S.eff = S.wpm;
+      if (k === "eff" && S.eff > S.wpm) S.wpm = S.eff;
+      syncSettings(); save();
+      if (k === "tone" && P.osc) P.osc.frequency.value = S.tone;
+    });
+  }
+  document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
+    const [w, e] = b.dataset.preset.split(",").map(Number);
+    S.wpm = w; S.eff = e; syncSettings(); save();
+  }));
+  $("testTone").addEventListener("click", () => play("PARIS"));
+  if (window.matchMedia("(max-width: 899px)").matches) $("rack").open = false;
+
+  // ---------- tabs ----------
+  const tabs = document.querySelectorAll(".tab");
+  function showTab(name) {
+    stop();
+    tabs.forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
+    ["koch", "words", "text", "chart"].forEach(n => $("p-" + n).hidden = n !== name);
+    S.tab = name; save();
+    if (name === "text") renderTape();
+  }
+  tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+  document.addEventListener("keydown", e => { if (e.key === "Escape") stop(); });
+
+  // ---------- Koch ----------
+  const kochSet = l => KOCH.slice(0, l + 1);
+  function renderLesson() {
+    S.lesson = clamp(S.lesson, 1, MAX_LESSON);
+    $("lessonNum").textContent = S.lesson;
+    const set = kochSet(S.lesson);
+    $("lessonInfo").textContent = `${set.length} characters · new: ${label(set[set.length - 1])}`;
+    $("kochChips").innerHTML = KOCH.map((c, i) => {
+      const cls = i === S.lesson ? "chip new" : i < S.lesson ? "chip" : "chip locked";
+      return `<button class="${cls}" data-ch="${esc(c)}" title="${esc(label(c))} ${MORSE[c]}">${esc(c)}</button>`;
+    }).join("");
+    $("lessonDown").disabled = S.lesson <= 1;
+    $("lessonUp").disabled = S.lesson >= MAX_LESSON;
+  }
+  const label = c => PROSIGN[c] ? `${c} (${PROSIGN[c]})` : c;
+  $("kochChips").addEventListener("click", e => { const b = e.target.closest("[data-ch]"); if (b) play(b.dataset.ch); });
+  $("lessonDown").addEventListener("click", () => { S.lesson--; renderLesson(); save(); });
+  $("lessonUp").addEventListener("click", () => { S.lesson++; renderLesson(); save(); });
+
+  function randomGroup(set, n) {
+    // newest character gets double weight so it shows up often enough to learn
+    const pool = set.length > 2 ? set.concat(set[set.length - 1]) : set;
+    let g = "";
+    for (let i = 0; i < n; i++) g += pool[Math.floor(Math.random() * pool.length)];
+    return g;
+  }
+
+  const K = { groups: [], starts: [], elapsed: 0, total: 0, running: false, wpm: 0, eff: 0 };
+  function startKoch() {
+    const set = kochSet(S.lesson);
+    const target = S.mins * 60;
+    const groups = [];
+    do { groups.push(randomGroup(set, S.grp)); } while (schedule(groups.join(" ")).total < target);
+    const text = groups.join(" ");
+    let idx = 0; const starts = groups.map(g => { const s = idx; idx += g.length + 1; return s; });
+    Object.assign(K, { groups, elapsed: 0, running: true, wpm: S.wpm, eff: Math.min(S.eff, S.wpm), lesson: S.lesson });
+    $("kochResult").hidden = true;
+    $("kochInput").value = "";
+    $("kochInput").focus();
+    setKochRunning(true);
+    $("kochStatus").textContent = "Starting…";
+    const sched = play(text, {
+      onTick: (now, sc) => {
+        K.elapsed = now;
+        $("kochBar").style.width = `${Math.min(100, (now / sc.total) * 100)}%`;
+        $("kochStatus").textContent = `${fmtTime(now)} / ${fmtTime(sc.total)}`;
+      },
+      onEnd: done => {
+        setKochRunning(false);
+        if (done) { K.elapsed = Infinity; $("kochBar").style.width = "100%"; $("kochStatus").textContent = "Done. Check your copy."; }
+        else $("kochStatus").textContent = "Stopped";
+      }
+    });
+    // start time of each group, for scoring a session that was stopped early
+    const startOf = new Map(sched.chars.map(c => [c.i, c.t]));
+    K.starts = starts.map(s => startOf.get(s));
+    K.total = sched.total;
+  }
+  function setKochRunning(on) { $("kochStart").disabled = on; $("kochStop").disabled = !on; }
+  $("kochStart").addEventListener("click", startKoch);
+  $("kochStop").addEventListener("click", stop);
+  $("kochCheck").addEventListener("click", checkKoch);
+
+  function lev(a, b) {
+    const m = a.length, n = b.length;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j), cur = new Array(n + 1);
+    for (let i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      [prev, cur] = [cur, prev];
+    }
+    return prev[n];
+  }
+
+  function checkKoch() {
+    if (!K.groups.length) { $("kochStatus").textContent = "Start a session first"; return; }
+    const elapsed = K.elapsed;
+    stop();
+    let sentN = K.starts.filter(t => t !== undefined && t <= elapsed).length;
+    if (elapsed === Infinity) sentN = K.groups.length;
+    if (sentN === 0) { $("kochStatus").textContent = "Nothing was sent yet"; return; }
+    const sent = K.groups.slice(0, sentN);
+    const recv = $("kochInput").value.toUpperCase().trim().split(/\s+/).filter(Boolean);
+    const sStr = sent.join(" "), rStr = recv.join(" ");
+    const acc = Math.max(0, Math.round((1 - lev(sStr, rStr) / sStr.length) * 100));
+    const pass = acc >= 90;
+
+    let html = "";
+    const n = Math.max(sent.length, recv.length);
+    for (let i = 0; i < n; i++) {
+      const s = sent[i] || "", r = recv[i] || "";
+      let rHtml = "";
+      const len = Math.max(s.length, r.length);
+      for (let j = 0; j < len; j++) {
+        if (j >= r.length) rHtml += `<span class="miss">_</span>`;
+        else if (r[j] === s[j]) rHtml += esc(r[j]);
+        else rHtml += `<span class="x">${esc(r[j])}</span>`;
+      }
+      html += `<div class="grp"><span class="s">${esc(s) || "&nbsp;"}</span><span class="r">${rHtml}</span></div>`;
+    }
+    const canNext = pass && K.lesson === S.lesson && S.lesson < MAX_LESSON;
+    $("kochResult").innerHTML = `
+      <div class="score">
+        <span class="pct ${pass ? "pass" : "fail"}">${acc}%</span>
+        <span class="verdict">${pass ? "Passed. Your copy is good enough to move on." : "Below 90%. Stay on this lesson and try again."}</span>
+      </div>
+      <p class="muted small">Lesson ${K.lesson} · ${sent.length} groups · ${K.wpm}/${K.eff} wpm</p>
+      <div class="legend small muted"><span>Top row: sent</span><span>Bottom row: your copy (errors marked)</span></div>
+      <div class="groups">${html}</div>
+      <div class="row">
+        ${canNext ? `<button class="btn primary" id="goNext">Go to lesson ${S.lesson + 1}</button>` : ""}
+        <button class="btn" id="again">Run lesson ${S.lesson} again</button>
+      </div>`;
+    $("kochResult").hidden = false;
+    if (canNext) $("goNext").addEventListener("click", () => { S.lesson++; renderLesson(); save(); startKoch(); });
+    $("again").addEventListener("click", startKoch);
+    history.unshift({ d: Date.now(), l: K.lesson, w: K.wpm, e: K.eff, g: sent.length, a: acc });
+    save(); renderHistory();
+    $("kochStatus").textContent = `Scored ${acc}%`;
+    K.groups = [];
+  }
+
+  function renderHistory() {
+    const t = $("historyTable");
+    if (!history.length) { t.innerHTML = `<tr><td class="muted">No sessions yet. Your scores appear here and stay in this browser.</td></tr>`; return; }
+    t.innerHTML = `<tr><th>When</th><th>Lesson</th><th>Speed</th><th>Groups</th><th>Score</th></tr>` +
+      history.slice(0, 10).map(h => {
+        const d = new Date(h.d);
+        return `<tr><td>${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} ${d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</td><td>${h.l}</td><td>${h.w}/${h.e}</td><td>${h.g}</td><td><span class="pill ${h.a >= 90 ? "pass" : "fail"}">${h.a}%</span></td></tr>`;
+      }).join("");
+  }
+
+  // ---------- Word drill ----------
+  const W = { item: null, answered: false, tried: 0, ok: 0, streak: 0, best: 0, timer: 0 };
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  function makeCall() {
+    let c = pick(PREFIXES);
+    if (!/\d$/.test(c)) c += Math.floor(Math.random() * 10);
+    const n = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) c += pick(LETTERS);
+    if (Math.random() < 0.08) c += "/P";
+    return c;
+  }
+  function nextItem() {
+    switch (S.wordMode) {
+      case "calls": return makeCall();
+      case "abbr": return pick(ABBR);
+      case "chars": return pick(kochSet(S.lesson));
+      default: return pick(WORDS);
+    }
+  }
+  function setBoard(state, big, sub) {
+    const b = $("wordBoard");
+    b.className = "board" + (state ? " " + state : "");
+    $("wordBig").textContent = big;
+    $("wordSub").textContent = sub;
+  }
+  function newWord() {
+    clearTimeout(W.timer);
+    W.item = nextItem(); W.answered = false;
+    $("wordInput").value = "";
+    setBoard("", "? ? ?", "Listening…");
+    $("wordInput").focus();
+    play(W.item, { onEnd: () => { if (!W.answered) setBoard("", "? ? ?", "Type what you heard and press Enter."); } });
+  }
+  function submitWord() {
+    if (!W.item || W.answered) { newWord(); return; }
+    const ans = $("wordInput").value.trim().toUpperCase();
+    if (!ans) { play(W.item); return; }
+    stop();
+    W.answered = true; W.tried++;
+    if (ans === W.item) {
+      W.ok++; W.streak++; W.best = Math.max(W.best, W.streak);
+      setBoard("ok", W.item, "Correct");
+      if (S.adaptive) { S.wpm = clamp(S.wpm + 1, 5, 60); if (S.eff >= S.wpm - 1) S.eff = S.wpm; syncSettings(); save(); }
+      W.timer = setTimeout(() => { if (W.answered && !$("p-words").hidden) newWord(); }, 700);
+    } else {
+      W.streak = 0;
+      setBoard("no", W.item, `You typed ${ans}. Listen again, then press Enter for the next one.`);
+      if (S.adaptive) { S.wpm = clamp(S.wpm - 1, 5, 60); S.eff = Math.min(S.eff, S.wpm); syncSettings(); save(); }
+      play(W.item);
+    }
+    $("stOk").textContent = W.ok; $("stTried").textContent = W.tried;
+    $("stStreak").textContent = W.streak; $("stBest").textContent = W.best;
+  }
+  $("wordInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitWord(); } });
+  $("wordPlay").addEventListener("click", () => { if (W.item && !W.answered) play(W.item); else newWord(); $("wordInput").focus(); });
+  $("wordReplay").addEventListener("click", () => { if (W.item) play(W.item); $("wordInput").focus(); });
+  $("wordSkip").addEventListener("click", () => { if (W.item && !W.answered) { W.streak = 0; $("stStreak").textContent = 0; } newWord(); });
+  $("adaptive").addEventListener("change", e => { S.adaptive = e.target.checked; save(); });
+  function renderMode() {
+    document.querySelectorAll("#wordMode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === S.wordMode)));
+  }
+  $("wordMode").addEventListener("click", e => {
+    const b = e.target.closest("[data-mode]"); if (!b) return;
+    S.wordMode = b.dataset.mode; save(); renderMode();
+    stop(); clearTimeout(W.timer); W.item = null;
+    setBoard("", "? ? ?", "Press Play, listen, type what you heard, then Enter.");
+  });
+
+  // ---------- Play text ----------
+  function renderTape() {
+    const text = $("textInput").value;
+    let html = "", count = 0;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i].toUpperCase();
+      if (/\s/.test(ch)) { if (!html.endsWith('gap"></span>')) html += `<span class="cell gap"></span>`; continue; }
+      const code = MORSE[ch];
+      if (!code) continue;
+      count++;
+      html += `<span class="cell" data-i="${i}"><span class="c">${esc(ch)}</span>${codeHTML(code)}</span>`;
+    }
+    $("tape").innerHTML = html || `<span class="muted small">Type something above to see it in Morse.</span>`;
+    const sc = schedule(text);
+    $("textInfo").textContent = count ? `${count} characters · about ${fmtTime(sc.total)} at ${S.wpm}/${Math.min(S.eff, S.wpm)} wpm. Characters without a Morse code are skipped.` : "";
+  }
+  $("textInput").addEventListener("input", renderTape);
+  $("textHide").addEventListener("change", e => { S.textHide = e.target.checked; save(); });
+  $("textPlay").addEventListener("click", () => {
+    renderTape();
+    const cells = new Map([...$("tape").querySelectorAll("[data-i]")].map(el => [Number(el.dataset.i), el]));
+    let cur = null, ci = 0;
+    $("textPlay").disabled = true; $("textStop").disabled = false;
+    if (S.textHide) $("tape").style.visibility = "hidden";
+    play($("textInput").value, {
+      onTick: (now, sc) => {
+        $("textBar").style.width = `${Math.min(100, (now / sc.total) * 100)}%`;
+        while (ci < sc.chars.length - 1 && sc.chars[ci + 1].t <= now) ci++;
+        const el = cells.get(sc.chars[ci].i);
+        if (el !== cur) { cur && cur.classList.remove("now"); el && el.classList.add("now"); cur = el; }
+      },
+      onEnd: () => {
+        cur && cur.classList.remove("now");
+        $("tape").style.visibility = "";
+        $("textPlay").disabled = false; $("textStop").disabled = true;
+      }
+    });
+  });
+  $("textStop").addEventListener("click", stop);
+
+  // ---------- Chart ----------
+  function renderChart() {
+    const make = chars => chars.map(c => {
+      const k = KOCH.indexOf(c);
+      const tag = PROSIGN[c] ? `<span class="lbl">${PROSIGN[c]}</span>` : k >= 0 ? `<span class="n">#${k + 1}</span>` : "";
+      return `<button class="key" data-ch="${esc(c)}" aria-label="Play ${esc(label(c))}">${tag}<span class="c">${esc(c)}</span>${codeHTML(MORSE[c])}</button>`;
+    }).join("");
+    $("chLetters").innerHTML = make(LETTERS.split(""));
+    $("chNumbers").innerHTML = make("1234567890".split(""));
+    $("chPunct").innerHTML = make(".,?/=+-'!():;@\"".split(""));
+  }
+  document.querySelector("#p-chart").addEventListener("click", e => {
+    const b = e.target.closest(".key"); if (!b) return;
+    document.querySelectorAll(".key.playing").forEach(k => k.classList.remove("playing"));
+    b.classList.add("playing");
+    play(b.dataset.ch, { onEnd: () => b.classList.remove("playing") });
+  });
+
+  // ---------- init ----------
+  syncSettings();
+  renderLesson();
+  renderHistory();
+  renderMode();
+  renderChart();
+  $("adaptive").checked = S.adaptive;
+  $("textHide").checked = S.textHide;
+  showTab(["koch", "words", "text", "chart"].includes(S.tab) ? S.tab : "koch");
+})();
+</script>
+</body>
+</html>

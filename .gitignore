@@ -1,0 +1,12 @@
+# build output
+android/.gradle/
+android/build/
+android/app/build/
+android/.kotlin/
+*.apk
+
+# machine-specific / secrets
+android/local.properties
+android/keystore.properties
+*.jks
+*.keystore
