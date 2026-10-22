@@ -1,7 +1,9 @@
 package net.cwdesk;
 
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
+import android.window.OnBackInvokedDispatcher;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebSettings;
@@ -25,8 +27,25 @@ public class MainActivity extends Activity {
         setContentView(web);
         // Keep the screen on during a copy session.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBack);
+        }
         if (state != null) web.restoreState(state);
         else web.loadUrl("file:///android_asset/index.html");
+    }
+
+    /** Back closes the settings page if it is open, otherwise leaves the app. */
+    private void handleBack() {
+        web.evaluateJavascript("window.cwBack ? cwBack() : false", handled -> {
+            if (!"true".equals(handled)) finish();
+        });
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() { // Android 12 and older
+        handleBack();
     }
 
     @Override
@@ -38,7 +57,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         // Stop any playing Morse when the app goes to the background.
-        web.evaluateJavascript("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))", null);
+        web.evaluateJavascript("window.cwStop && cwStop()", null);
         web.onPause();
         super.onPause();
     }

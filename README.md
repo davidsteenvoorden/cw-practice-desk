@@ -3,8 +3,9 @@
 A free Morse code (CW) trainer for Android and Linux, inspired by [LCWO](https://lcwo.net). It needs no account and no internet connection. The Android app is about 35 KB.
 
 <p>
-  <img src="docs/phone.png" alt="CW Practice Desk on a phone" height="420">
-  <img src="docs/desktop.png" alt="CW Practice Desk on the desktop" height="420">
+  <img src="docs/phone.png" alt="Practice screen on a phone" height="420">
+  <img src="docs/settings.png" alt="Settings screen on a phone" height="420">
+  <img src="docs/desktop.png" alt="Practice screen on the desktop" height="420">
 </p>
 
 ## Download
@@ -15,12 +16,22 @@ All versions are on the [Releases page](https://github.com/davidsteenvoorden/cw-
 
 ## What it does
 
-- **Koch lessons.** Uses the same 40-lesson character order as LCWO, starting with K and M. The app plays random groups of characters and you type what you hear. When you check your copy, it scores you and marks each mistake. At 90% or better it offers the next lesson.
-- **Word drill.** Practise common English words, random callsigns (W1ABC, DL3XY, S52AB…), ham abbreviations (CQ, QTH, RST, 73…) or single characters from your current lesson. You can turn on adaptive speed: each correct answer adds 1 wpm and each miss takes 1 away.
-- **Play text.** Type or paste any text and the app keys it, highlighting each character as it plays.
-- **Code chart.** Tap any letter, number or prosign to hear it.
+The app has two tabs, **Practice** and **Code chart**, plus a settings screen behind the gear button.
 
-### Speed and tone settings
+### Practice
+
+- **Level.** Pick a level with − and +. Levels follow LCWO's 40-lesson Koch order: level 1 is K and M, and each level adds one character. The newest character is highlighted. Tap any character to hear it.
+- **Letter drill.** Press Play, listen to one character from your level, type it and press Enter. Correct answers move on by themselves. After a miss, the app shows the right answer and plays it again; press Enter for the next one. Press Enter on an empty box to replay.
+- **Practise weak letters more.** Every character has a weight that starts at 1, or 3 for the newest character. Each miss adds 2, up to 8. Each correct answer moves the weight 40% of the way back to 1. The next character is drawn in proportion to these weights, and never the same one twice in a row. You can turn this off in settings.
+- **Hit-rate bars.** Once you've answered a character 3 times, its button gets a coloured bar from red to green showing how often you get it right.
+- **Stats.** Correct, tried, streak and best streak. They are saved after every answer, so they survive closing the app.
+- **Adaptive speed.** When it's on, each correct answer adds 1 wpm and each miss takes 1 away.
+
+### Code chart
+
+Every letter, number, punctuation mark and prosign with its code. Each one is labelled with the level that adds it, and you can tap it to hear it.
+
+### Settings
 
 | Setting | Range | What it does |
 |---|---|---|
@@ -28,12 +39,14 @@ All versions are on the [Releases page](https://github.com/davidsteenvoorden/cw-
 | Effective speed | 3–60 wpm | Farnsworth spacing: characters stay at full speed and the gaps between them get longer. 20/8 is a good place to start |
 | Tone | 300–1200 Hz | Pitch of the sidetone |
 | Volume | 0–100% | |
-| Group size | 1–10 | Characters per group in Koch lessons |
-| Session length | 0.5–10 min | How long a Koch session runs |
+| Accent colour | 7 colours | Changes the highlight colour, in both light and dark mode |
+| Practise weak letters more | on / off | Turns the weighting described above on or off |
+| Advanced: more drill types | on / off | Adds drills for common words, callsigns (W1ABC, DL3XY, S52AB…) and ham abbreviations (CQ, QTH, RST, 73…) |
+| Reset stats | | Clears your stats and per-letter history. It asks you to confirm first |
 
 Timing follows the PARIS standard: one dit lasts 1.2 / wpm seconds. Farnsworth gaps use the ARRL formula. Each tone fades in and out over 5 ms, so there are no key clicks.
 
-Your settings, current lesson and recent scores are saved on the device. Nothing is ever sent anywhere, and the app requests no permissions.
+Everything is saved on the device. Nothing is ever sent anywhere, and the app requests no permissions.
 
 ## Installing on Android
 

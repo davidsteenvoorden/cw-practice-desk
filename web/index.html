@@ -79,7 +79,8 @@ p { margin: 0; }
 .readout b { color: var(--accent-ink); font-weight: 600; }
 
 /* tabs */
-.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); overflow-x: auto; }
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
   font-family: var(--f-display); font-stretch: 85%; font-weight: 650; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em;
   background: none; border: 0; color: var(--muted); padding: 10px 14px; cursor: pointer; white-space: nowrap;
@@ -89,8 +90,6 @@ p { margin: 0; }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 
 .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
-@media (min-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) 300px; } .rack { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); } }
-@media (max-width: 899px) { .rack { order: -1; } }
 
 .panel { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -197,7 +196,9 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 .cell.now .code { color: var(--on-accent); }
 
 /* chart */
-.chart { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.chart { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.key .code { flex-wrap: wrap; max-width: 100%; }
+.key .code i.dah { width: 14px; }
 .key {
   display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left;
   border: 1px solid var(--line); background: var(--sunk); color: var(--ink); border-radius: var(--r); padding: 10px 12px; cursor: pointer; position: relative;
@@ -229,79 +230,91 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .divider { height: 1px; background: var(--line); }
 
 @media (prefers-reduced-motion: reduce) { .lamp { transition: none; } }
+
+/* v1.1 additions */
+.top-right { display: flex; align-items: center; gap: 10px; }
+.readout { height: 34px; align-items: center; padding-block: 0; }
+.gear {
+  width: 34px; height: 34px; display: grid; place-items: center; flex: none; padding: 0; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); color: var(--ink);
+}
+.gear:hover { border-color: var(--muted); }
+.gear[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.gear svg { width: 18px; height: 18px; }
+/* settings: full-screen page over the app */
+.rack {
+  position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain;
+  border: 0; border-radius: 0; background: var(--bg);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.rack > * { max-width: 560px; margin-inline: auto; }
+.rack .body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
+.rack-head { padding: 8px 0 14px; }
+.rack-head h3 { font-size: 1.4rem; text-transform: uppercase; }
+.rack-close { font-size: 2rem; }
+.rack-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; }
+.rack-head h3 { color: var(--ink); font-size: 1rem; }
+.rack-close { background: none; border: 0; color: var(--muted); font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 2px 6px; }
+.rack-close:hover { color: var(--ink); }
+.chip.rated { box-shadow: inset 0 -4px 0 var(--rate); }
+.chip.new.rated { box-shadow: inset 0 -4px 0 var(--rate); }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch {
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  border: 2px solid var(--line); background: var(--sw); padding: 0;
+}
+.swatch[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 3px var(--surface) inset; }
+.confirm { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 0.9rem; }
 </style>
 </head>
 <body>
-
 <div class="app">
   <header class="top">
     <div class="brand">
       <span class="lamp" id="lamp" aria-hidden="true"></span>
       <div>
         <h1>CW Practice Desk</h1>
-        <div class="sub" aria-hidden="true">-.-. .-- &nbsp; .--. .-. .- -.-. - .. -.-. .</div>
       </div>
     </div>
-    <div class="readout" id="readout" aria-live="polite"></div>
+    <div class="top-right">
+      <div class="readout" id="readout" aria-live="polite"></div>
+      <button class="gear" id="gear" aria-label="Settings" aria-expanded="false" aria-controls="rack" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
   </header>
 
-  <nav class="tabs" role="tablist" aria-label="Training modes">
-    <button class="tab" role="tab" id="t-koch" data-tab="koch" aria-selected="true">Koch lessons</button>
-    <button class="tab" role="tab" id="t-words" data-tab="words" aria-selected="false">Word drill</button>
-    <button class="tab" role="tab" id="t-text" data-tab="text" aria-selected="false">Play text</button>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-practice" data-tab="practice" aria-selected="true">Practice</button>
     <button class="tab" role="tab" id="t-chart" data-tab="chart" aria-selected="false">Code chart</button>
   </nav>
 
   <div class="layout">
     <main>
-      <!-- KOCH -->
-      <section class="panel" id="p-koch" role="tabpanel" aria-labelledby="t-koch">
+      <!-- PRACTICE -->
+      <section class="panel" id="p-practice" role="tabpanel" aria-labelledby="t-practice">
         <div class="card">
           <div class="lesson-head">
-            <h2>Lesson</h2>
+            <h2>Level</h2>
             <div class="stepper">
-              <button id="lessonDown" aria-label="Previous lesson">−</button>
+              <button id="lessonDown" aria-label="Previous level">−</button>
               <output id="lessonNum">1</output>
-              <button id="lessonUp" aria-label="Next lesson">+</button>
+              <button id="lessonUp" aria-label="Next level">+</button>
             </div>
             <p class="muted small" id="lessonInfo"></p>
           </div>
           <div class="chips" id="kochChips"></div>
-          <p class="muted small">Tap a character to hear it. The highlighted one is new in this lesson. Copy random groups, then check your copy. Reach 90% to move up a lesson.</p>
         </div>
 
         <div class="card">
-          <div class="row">
-            <button class="btn primary" id="kochStart">▶ Start session</button>
-            <button class="btn" id="kochStop" disabled>■ Stop</button>
-            <span class="spacer"></span>
-            <span class="status" id="kochStatus">Ready</span>
-          </div>
-          <div class="progress"><div id="kochBar"></div></div>
-          <label for="kochInput" class="small muted">Type what you hear. Leave a space between groups.</label>
-          <textarea id="kochInput" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="KMKKM MMKMK …"></textarea>
-          <div class="row">
-            <button class="btn" id="kochCheck">Check copy</button>
-            <span class="muted small">Checking stops playback and scores only the groups that were sent.</span>
-          </div>
-        </div>
-
-        <div class="card" id="kochResult" hidden></div>
-
-        <div class="card">
-          <h3>Recent sessions</h3>
-          <div class="tablewrap"><table id="historyTable"></table></div>
-        </div>
-      </section>
-
-      <!-- WORDS -->
-      <section class="panel" id="p-words" role="tabpanel" aria-labelledby="t-words" hidden>
-        <div class="card">
-          <div class="seg" id="wordMode" role="group" aria-label="What to drill">
-            <button data-mode="words" aria-pressed="true">Common words</button>
+          <div class="seg" id="wordMode" role="group" aria-label="What to drill" hidden>
+            <button data-mode="chars" aria-pressed="true">Level letters</button>
+            <button data-mode="words" aria-pressed="false">Common words</button>
             <button data-mode="calls" aria-pressed="false">Callsigns</button>
             <button data-mode="abbr" aria-pressed="false">Ham abbreviations</button>
-            <button data-mode="chars" aria-pressed="false">Lesson characters</button>
           </div>
           <div class="board" id="wordBoard"><div><div class="big" id="wordBig">? ? ?</div><div class="muted small" id="wordSub">Press Play, listen, type what you heard, then Enter.</div></div></div>
           <input type="text" id="wordInput" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Type and press Enter">
@@ -312,7 +325,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
             <span class="spacer"></span>
             <label class="check"><input type="checkbox" id="adaptive"> Adaptive speed</label>
           </div>
-          <p class="muted small">Enter submits. Empty Enter replays. <kbd>Esc</kbd> stops sound. With adaptive speed on, each correct copy adds 1 wpm and each miss takes 1 away.</p>
           <div class="stats">
             <div class="stat"><div class="v" id="stOk">0</div><div class="k">Correct</div></div>
             <div class="stat"><div class="v" id="stTried">0</div><div class="k">Tried</div></div>
@@ -322,37 +334,19 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
         </div>
       </section>
 
-      <!-- TEXT -->
-      <section class="panel" id="p-text" role="tabpanel" aria-labelledby="t-text" hidden>
-        <div class="card">
-          <label for="textInput"><h3>Text to send</h3></label>
-          <textarea id="textInput" class="plain" spellcheck="false">CQ CQ CQ DE N0CALL N0CALL K
-UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
-          <div class="row">
-            <button class="btn primary" id="textPlay">▶ Play</button>
-            <button class="btn" id="textStop" disabled>■ Stop</button>
-            <span class="spacer"></span>
-            <label class="check"><input type="checkbox" id="textHide"> Hide tape while playing</label>
-          </div>
-          <div class="progress"><div id="textBar"></div></div>
-          <div class="tape" id="tape" aria-label="Morse rendering of the text"></div>
-          <p class="muted small" id="textInfo"></p>
-        </div>
-      </section>
-
       <!-- CHART -->
       <section class="panel" id="p-chart" role="tabpanel" aria-labelledby="t-chart" hidden>
         <div class="card">
           <h3>Letters</h3><div class="chart" id="chLetters"></div>
           <h3>Numbers</h3><div class="chart" id="chNumbers"></div>
           <h3>Punctuation and prosigns</h3><div class="chart" id="chPunct"></div>
-          <p class="muted small">Small numbers show where a character appears in the Koch order. Learn characters by their sound, not by counting dots.</p>
+          <p class="muted small">Small labels show the level that adds each character.</p>
         </div>
       </section>
     </main>
 
-    <details class="rack" id="rack" open>
-      <summary>Speed and tone</summary>
+    <aside class="rack" id="rack" aria-label="Settings" hidden>
+      <div class="rack-head"><h3>Settings</h3><button class="rack-close" id="rackClose" aria-label="Close settings">×</button></div>
       <div class="body">
         <div class="presets">
           <button class="btn sm" data-preset="20,8">Learn 20/8</button>
@@ -363,7 +357,6 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
         <div class="field">
           <div class="lab"><label for="wpm">Character speed</label><span class="val" id="wpmV"></span></div>
           <input type="range" id="wpm" min="5" max="60" step="1">
-          <span class="hint">How fast each letter is keyed.</span>
         </div>
         <div class="field">
           <div class="lab"><label for="eff">Effective speed</label><span class="val" id="effV"></span></div>
@@ -379,18 +372,22 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
           <div class="lab"><label for="vol">Volume</label><span class="val" id="volV"></span></div>
           <input type="range" id="vol" min="0" max="100" step="1">
         </div>
+        <button class="btn sm" id="testTone">▶ Test: PARIS</button>
         <div class="divider"></div>
         <div class="field">
-          <div class="lab"><label for="grp">Group size</label><span class="val" id="grpV"></span></div>
-          <input type="range" id="grp" min="1" max="10" step="1">
+          <div class="lab"><span>Accent colour</span></div>
+          <div class="swatches" id="swatches" role="group" aria-label="Accent colour"></div>
         </div>
-        <div class="field">
-          <div class="lab"><label for="mins">Session length</label><span class="val" id="minsV"></span></div>
-          <input type="range" id="mins" min="0.5" max="10" step="0.5">
+        <div class="divider"></div>
+        <label class="check"><input type="checkbox" id="weighted"> Practise weak letters more</label>
+        <span class="hint muted small">Letters you miss come up more often until you get them right.</span>
+        <label class="check"><input type="checkbox" id="advanced"> Advanced: more drill types</label>
+        <div class="divider"></div>
+        <div class="confirm" id="resetBox">
+          <button class="btn sm" id="resetStats">Reset stats</button>
         </div>
-        <button class="btn sm" id="testTone">▶ Test: PARIS</button>
       </div>
-    </details>
+    </aside>
   </div>
 </div>
 
@@ -405,7 +402,7 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
     "!": "-.-.--", "(": "-.--.", ")": "-.--.-", ":": "---...", ";": "-.-.-.", "@": ".--.-.", '"': ".-..-."
   };
   const PROSIGN = { "=": "BT", "+": "AR" };
-  // LCWO Koch order: lesson n uses the first n+1 characters.
+  // LCWO Koch order: level n uses the first n+1 characters.
   const KOCH = "KMURESNAPTLWI.JZ=FOY,VG5/Q92H38B?47C1D60X".split("");
   const MAX_LESSON = KOCH.length - 1;
 
@@ -414,12 +411,25 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
   const PREFIXES = ["W","K","N","AA","KD","KE","KB","VE","G","M","2E","DL","DK","F","I","IK","EA","S5","9A","OE","OK","OM","SP","HA","YU","JA","VK","ZL","PY","LU","ON","PA","OH","SM","LA","OZ","EI","HB9","LY","YO"];
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-  // ---------- settings ----------
-  const DEFAULTS = { wpm: 20, eff: 10, tone: 600, vol: 60, grp: 5, mins: 1, lesson: 1, tab: "koch", wordMode: "words", adaptive: false, textHide: false };
+  // accent themes: [accent, accent text, text on accent] for light and dark
+  const ACCENTS = {
+    amber:  { light: ["#e08a12", "#8c4d00", "#1c1204"], dark: ["#f2a23c", "#f6b766", "#1c1204"] },
+    green:  { light: ["#2e9e5b", "#1d6b3c", "#ffffff"], dark: ["#4cc77f", "#7fdba4", "#06170d"] },
+    teal:   { light: ["#14989a", "#0b6668", "#ffffff"], dark: ["#3cc4c6", "#7ad9da", "#041a1b"] },
+    blue:   { light: ["#2f7fd8", "#1b528f", "#ffffff"], dark: ["#5aa2f0", "#8cc0f7", "#06121f"] },
+    violet: { light: ["#8a5cd6", "#5d3a99", "#ffffff"], dark: ["#a985f0", "#c6adf7", "#140a24"] },
+    red:    { light: ["#d9433a", "#9a2620", "#ffffff"], dark: ["#f06a5f", "#f7988f", "#1f0806"] },
+    pink:   { light: ["#d6457f", "#962656", "#ffffff"], dark: ["#f07aa8", "#f7a6c6", "#22070f"] }
+  };
+
+  // ---------- saved state ----------
+  const DEFAULTS = { wpm: 20, eff: 10, tone: 600, vol: 60, lesson: 1, tab: "practice", wordMode: "chars", adaptive: false, weighted: true, advanced: false, accent: "amber" };
   const S = Object.assign({}, DEFAULTS, load("cwdesk.settings", {}));
-  let history = load("cwdesk.history", []);
+  // drill stats survive restarts: totals plus per-letter weight/hits/misses
+  const D = Object.assign({ ok: 0, tried: 0, streak: 0, best: 0, chars: {} }, load("cwdesk.drill", {}));
   function load(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }
-  function save() { try { localStorage.setItem("cwdesk.settings", JSON.stringify(S)); localStorage.setItem("cwdesk.history", JSON.stringify(history.slice(0, 50))); } catch {} }
+  function save() { try { localStorage.setItem("cwdesk.settings", JSON.stringify(S)); } catch {} }
+  function saveDrill() { try { localStorage.setItem("cwdesk.drill", JSON.stringify(D)); } catch {} }
 
   const $ = id => document.getElementById(id);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -434,14 +444,13 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
   }
   function schedule(text) {
     const { dot, cs, ws } = timings();
-    const marks = [], chars = [];
+    const marks = [];
     let t = 0, prevChar = false;
     for (let i = 0; i < text.length; i++) {
       const ch = text[i].toUpperCase();
       if (/\s/.test(ch)) { if (prevChar) { t += ws - cs; prevChar = false; } continue; }
       const code = MORSE[ch];
       if (!code) continue;
-      chars.push({ i, t });
       for (let k = 0; k < code.length; k++) {
         const d = code[k] === "." ? dot : 3 * dot;
         marks.push([t, t + d]);
@@ -450,7 +459,7 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
       }
       t += cs; prevChar = true;
     }
-    return { marks, chars, total: t };
+    return { marks, total: t };
   }
 
   let ac = null;
@@ -459,13 +468,13 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
     if (ac.state === "suspended") ac.resume();
     return ac;
   }
-  const P = { token: 0, osc: null, gain: null, t0: 0, sched: null, raf: 0, onEnd: null, onTick: null };
+  const P = { token: 0, osc: null, gain: null, raf: 0, onEnd: null };
   const lamp = $("lamp");
 
-  function play(text, { onEnd, onTick } = {}) {
+  function play(text, { onEnd } = {}) {
     stop();
     const sched = schedule(text);
-    if (!sched.marks.length) { onEnd && onEnd(true); return null; }
+    if (!sched.marks.length) { onEnd && onEnd(true); return; }
     const ctx = audio();
     const tok = ++P.token;
     const osc = ctx.createOscillator();
@@ -486,7 +495,7 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
     }
     osc.start(t0);
     osc.stop(t0 + sched.total + 0.05);
-    Object.assign(P, { osc, gain: g, t0, sched, onEnd, onTick });
+    Object.assign(P, { osc, gain: g, onEnd });
     osc.onended = () => {
       if (tok !== P.token) return;
       const cb = P.onEnd; cleanup(); cb && cb(true);
@@ -498,17 +507,15 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
       while (mi < sched.marks.length && sched.marks[mi][1] < now) mi++;
       const m = sched.marks[mi];
       lamp.classList.toggle("on", !!m && now >= m[0] && now <= m[1]);
-      P.onTick && P.onTick(Math.max(0, now), sched);
       P.raf = requestAnimationFrame(loop);
     };
     P.raf = requestAnimationFrame(loop);
-    return sched;
   }
   function cleanup() {
     P.token++;
     cancelAnimationFrame(P.raf);
     lamp.classList.remove("on");
-    P.osc = null; P.gain = null; P.onEnd = null; P.onTick = null;
+    P.osc = null; P.gain = null; P.onEnd = null;
   }
   function stop() {
     if (!P.osc) return;
@@ -521,14 +528,29 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
   }
 
   const codeHTML = code => `<span class="code" aria-label="${code.replace(/\./g, "dit ").replace(/-/g, "dah ").trim()}">${code.split("").map(s => `<i class="${s === "." ? "dit" : "dah"}"></i>`).join("")}</span>`;
-  const fmtTime = s => { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
   const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const label = c => PROSIGN[c] ? `${c} (${PROSIGN[c]})` : c;
 
-  // ---------- settings UI ----------
-  const fields = {
-    wpm: v => `${v} wpm`, eff: v => `${Math.min(v, S.wpm)} wpm`, tone: v => `${v} Hz`, vol: v => `${v}%`,
-    grp: v => `${v} char${v > 1 ? "s" : ""}`, mins: v => `${v} min`
-  };
+  // ---------- accent ----------
+  const darkMQ = window.matchMedia("(prefers-color-scheme: dark)");
+  function applyAccent() {
+    const a = ACCENTS[S.accent] || ACCENTS.amber;
+    const t = document.documentElement.dataset.theme;
+    const [acc, ink, on] = (t ? t === "dark" : darkMQ.matches) ? a.dark : a.light;
+    const st = document.documentElement.style;
+    st.setProperty("--accent", acc); st.setProperty("--accent-ink", ink); st.setProperty("--on-accent", on);
+    document.querySelectorAll(".swatch").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.accent === S.accent)));
+  }
+  darkMQ.addEventListener("change", applyAccent);
+  $("swatches").innerHTML = Object.keys(ACCENTS).map(k =>
+    `<button class="swatch" data-accent="${k}" style="--sw:${ACCENTS[k].light[0]}" aria-label="${k}" title="${k}"></button>`).join("");
+  $("swatches").addEventListener("click", e => {
+    const b = e.target.closest("[data-accent]"); if (!b) return;
+    S.accent = b.dataset.accent; save(); applyAccent();
+  });
+
+  // ---------- settings ----------
+  const fields = { wpm: v => `${v} wpm`, eff: v => `${Math.min(v, S.wpm)} wpm`, tone: v => `${v} Hz`, vol: v => `${v}%` };
   function syncSettings() {
     for (const k in fields) { $(k).value = S[k]; $(k + "V").textContent = fields[k](S[k]); }
     const { dot } = timings();
@@ -548,21 +570,53 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
     S.wpm = w; S.eff = e; syncSettings(); save();
   }));
   $("testTone").addEventListener("click", () => play("PARIS"));
-  if (window.matchMedia("(max-width: 899px)").matches) $("rack").open = false;
+  function toggleRack(open) {
+    $("rack").hidden = !open;
+    $("gear").setAttribute("aria-expanded", String(open));
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open) { stop(); $("rack").scrollTop = 0; }
+  }
+  $("gear").addEventListener("click", () => toggleRack($("rack").hidden));
+  $("rackClose").addEventListener("click", () => toggleRack(false));
+  // hooks for the Android wrapper: Back closes settings first, leaving the app stops sound
+  window.cwBack = () => { if ($("rack").hidden) return false; toggleRack(false); return true; };
+  window.cwStop = () => stop();
+
+  $("weighted").addEventListener("change", e => { S.weighted = e.target.checked; save(); });
+  $("advanced").addEventListener("change", e => {
+    S.advanced = e.target.checked;
+    if (!S.advanced && S.wordMode !== "chars") { S.wordMode = "chars"; resetItem(); }
+    save(); renderMode();
+  });
+
+  // reset with an in-page confirm step
+  function renderReset(confirming) {
+    $("resetBox").innerHTML = confirming
+      ? `<span>Clear all drill stats and letter history?</span><button class="btn sm primary" id="resetYes">Clear</button><button class="btn sm" id="resetNo">Cancel</button>`
+      : `<button class="btn sm" id="resetStats">Reset stats</button>`;
+  }
+  $("resetBox").addEventListener("click", e => {
+    const id = e.target.id;
+    if (id === "resetStats") renderReset(true);
+    else if (id === "resetNo") renderReset(false);
+    else if (id === "resetYes") {
+      Object.assign(D, { ok: 0, tried: 0, streak: 0, best: 0, chars: {} });
+      saveDrill(); renderStats(); renderLesson(); renderReset(false);
+    }
+  });
 
   // ---------- tabs ----------
   const tabs = document.querySelectorAll(".tab");
   function showTab(name) {
     stop();
     tabs.forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
-    ["koch", "words", "text", "chart"].forEach(n => $("p-" + n).hidden = n !== name);
+    ["practice", "chart"].forEach(n => $("p-" + n).hidden = n !== name);
     S.tab = name; save();
-    if (name === "text") renderTape();
   }
   tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
-  document.addEventListener("keydown", e => { if (e.key === "Escape") stop(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { stop(); if (!$("rack").hidden) toggleRack(false); } });
 
-  // ---------- Koch ----------
+  // ---------- level ----------
   const kochSet = l => KOCH.slice(0, l + 1);
   function renderLesson() {
     S.lesson = clamp(S.lesson, 1, MAX_LESSON);
@@ -570,133 +624,52 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
     const set = kochSet(S.lesson);
     $("lessonInfo").textContent = `${set.length} characters · new: ${label(set[set.length - 1])}`;
     $("kochChips").innerHTML = KOCH.map((c, i) => {
-      const cls = i === S.lesson ? "chip new" : i < S.lesson ? "chip" : "chip locked";
-      return `<button class="${cls}" data-ch="${esc(c)}" title="${esc(label(c))} ${MORSE[c]}">${esc(c)}</button>`;
+      let cls = i === S.lesson ? "chip new" : i < S.lesson ? "chip" : "chip locked";
+      let style = "", title = `${label(c)} ${MORSE[c]}`;
+      const st = D.chars[c];
+      const n = st ? st.hit + st.miss : 0;
+      if (n >= 3) {
+        const pct = Math.round((st.hit / n) * 100);
+        cls += " rated";
+        style = ` style="--rate: color-mix(in srgb, var(--good) ${pct}%, var(--bad))"`;
+        title += ` · ${pct}% of ${n}`;
+      }
+      return `<button class="${cls}"${style} data-ch="${esc(c)}" title="${esc(title)}">${esc(c)}</button>`;
     }).join("");
     $("lessonDown").disabled = S.lesson <= 1;
     $("lessonUp").disabled = S.lesson >= MAX_LESSON;
   }
-  const label = c => PROSIGN[c] ? `${c} (${PROSIGN[c]})` : c;
   $("kochChips").addEventListener("click", e => { const b = e.target.closest("[data-ch]"); if (b) play(b.dataset.ch); });
-  $("lessonDown").addEventListener("click", () => { S.lesson--; renderLesson(); save(); });
-  $("lessonUp").addEventListener("click", () => { S.lesson++; renderLesson(); save(); });
-
-  function randomGroup(set, n) {
-    // newest character gets double weight so it shows up often enough to learn
-    const pool = set.length > 2 ? set.concat(set[set.length - 1]) : set;
-    let g = "";
-    for (let i = 0; i < n; i++) g += pool[Math.floor(Math.random() * pool.length)];
-    return g;
+  function changeLesson(d) {
+    S.lesson += d; renderLesson(); save();
+    if (S.wordMode === "chars") resetItem();
   }
+  $("lessonDown").addEventListener("click", () => changeLesson(-1));
+  $("lessonUp").addEventListener("click", () => changeLesson(1));
 
-  const K = { groups: [], starts: [], elapsed: 0, total: 0, running: false, wpm: 0, eff: 0 };
-  function startKoch() {
-    const set = kochSet(S.lesson);
-    const target = S.mins * 60;
-    const groups = [];
-    do { groups.push(randomGroup(set, S.grp)); } while (schedule(groups.join(" ")).total < target);
-    const text = groups.join(" ");
-    let idx = 0; const starts = groups.map(g => { const s = idx; idx += g.length + 1; return s; });
-    Object.assign(K, { groups, elapsed: 0, running: true, wpm: S.wpm, eff: Math.min(S.eff, S.wpm), lesson: S.lesson });
-    $("kochResult").hidden = true;
-    $("kochInput").value = "";
-    $("kochInput").focus();
-    setKochRunning(true);
-    $("kochStatus").textContent = "Starting…";
-    const sched = play(text, {
-      onTick: (now, sc) => {
-        K.elapsed = now;
-        $("kochBar").style.width = `${Math.min(100, (now / sc.total) * 100)}%`;
-        $("kochStatus").textContent = `${fmtTime(now)} / ${fmtTime(sc.total)}`;
-      },
-      onEnd: done => {
-        setKochRunning(false);
-        if (done) { K.elapsed = Infinity; $("kochBar").style.width = "100%"; $("kochStatus").textContent = "Done. Check your copy."; }
-        else $("kochStatus").textContent = "Stopped";
-      }
-    });
-    // start time of each group, for scoring a session that was stopped early
-    const startOf = new Map(sched.chars.map(c => [c.i, c.t]));
-    K.starts = starts.map(s => startOf.get(s));
-    K.total = sched.total;
-  }
-  function setKochRunning(on) { $("kochStart").disabled = on; $("kochStop").disabled = !on; }
-  $("kochStart").addEventListener("click", startKoch);
-  $("kochStop").addEventListener("click", stop);
-  $("kochCheck").addEventListener("click", checkKoch);
-
-  function lev(a, b) {
-    const m = a.length, n = b.length;
-    let prev = Array.from({ length: n + 1 }, (_, j) => j), cur = new Array(n + 1);
-    for (let i = 1; i <= m; i++) {
-      cur[0] = i;
-      for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-      [prev, cur] = [cur, prev];
-    }
-    return prev[n];
-  }
-
-  function checkKoch() {
-    if (!K.groups.length) { $("kochStatus").textContent = "Start a session first"; return; }
-    const elapsed = K.elapsed;
-    stop();
-    let sentN = K.starts.filter(t => t !== undefined && t <= elapsed).length;
-    if (elapsed === Infinity) sentN = K.groups.length;
-    if (sentN === 0) { $("kochStatus").textContent = "Nothing was sent yet"; return; }
-    const sent = K.groups.slice(0, sentN);
-    const recv = $("kochInput").value.toUpperCase().trim().split(/\s+/).filter(Boolean);
-    const sStr = sent.join(" "), rStr = recv.join(" ");
-    const acc = Math.max(0, Math.round((1 - lev(sStr, rStr) / sStr.length) * 100));
-    const pass = acc >= 90;
-
-    let html = "";
-    const n = Math.max(sent.length, recv.length);
-    for (let i = 0; i < n; i++) {
-      const s = sent[i] || "", r = recv[i] || "";
-      let rHtml = "";
-      const len = Math.max(s.length, r.length);
-      for (let j = 0; j < len; j++) {
-        if (j >= r.length) rHtml += `<span class="miss">_</span>`;
-        else if (r[j] === s[j]) rHtml += esc(r[j]);
-        else rHtml += `<span class="x">${esc(r[j])}</span>`;
-      }
-      html += `<div class="grp"><span class="s">${esc(s) || "&nbsp;"}</span><span class="r">${rHtml}</span></div>`;
-    }
-    const canNext = pass && K.lesson === S.lesson && S.lesson < MAX_LESSON;
-    $("kochResult").innerHTML = `
-      <div class="score">
-        <span class="pct ${pass ? "pass" : "fail"}">${acc}%</span>
-        <span class="verdict">${pass ? "Passed. Your copy is good enough to move on." : "Below 90%. Stay on this lesson and try again."}</span>
-      </div>
-      <p class="muted small">Lesson ${K.lesson} · ${sent.length} groups · ${K.wpm}/${K.eff} wpm</p>
-      <div class="legend small muted"><span>Top row: sent</span><span>Bottom row: your copy (errors marked)</span></div>
-      <div class="groups">${html}</div>
-      <div class="row">
-        ${canNext ? `<button class="btn primary" id="goNext">Go to lesson ${S.lesson + 1}</button>` : ""}
-        <button class="btn" id="again">Run lesson ${S.lesson} again</button>
-      </div>`;
-    $("kochResult").hidden = false;
-    if (canNext) $("goNext").addEventListener("click", () => { S.lesson++; renderLesson(); save(); startKoch(); });
-    $("again").addEventListener("click", startKoch);
-    history.unshift({ d: Date.now(), l: K.lesson, w: K.wpm, e: K.eff, g: sent.length, a: acc });
-    save(); renderHistory();
-    $("kochStatus").textContent = `Scored ${acc}%`;
-    K.groups = [];
-  }
-
-  function renderHistory() {
-    const t = $("historyTable");
-    if (!history.length) { t.innerHTML = `<tr><td class="muted">No sessions yet. Your scores appear here and stay in this browser.</td></tr>`; return; }
-    t.innerHTML = `<tr><th>When</th><th>Lesson</th><th>Speed</th><th>Groups</th><th>Score</th></tr>` +
-      history.slice(0, 10).map(h => {
-        const d = new Date(h.d);
-        return `<tr><td>${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} ${d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</td><td>${h.l}</td><td>${h.w}/${h.e}</td><td>${h.g}</td><td><span class="pill ${h.a >= 90 ? "pass" : "fail"}">${h.a}%</span></td></tr>`;
-      }).join("");
-  }
-
-  // ---------- Word drill ----------
-  const W = { item: null, answered: false, tried: 0, ok: 0, streak: 0, best: 0, timer: 0 };
+  // ---------- drill ----------
+  const W = { item: null, last: null, answered: false, timer: 0 };
   const pick = a => a[Math.floor(Math.random() * a.length)];
+
+  // Weak-letter weighting: each letter has a weight (default 1, newest letter 3).
+  // A miss adds 2 (max 8); a hit moves it 40% of the way back to 1.
+  // Letters are drawn in proportion to weight, never the same one twice in a row.
+  function charStat(c) {
+    const set = kochSet(S.lesson);
+    return D.chars[c] || (D.chars[c] = { w: c === set[set.length - 1] ? 3 : 1, hit: 0, miss: 0 });
+  }
+  function pickChar() {
+    const set = kochSet(S.lesson);
+    const newest = set[set.length - 1];
+    const weights = set.map(c => {
+      if (c === W.last && set.length > 1) return 0;
+      if (!S.weighted) return 1;
+      return D.chars[c] ? D.chars[c].w : (c === newest ? 3 : 1);
+    });
+    let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < set.length; i++) { r -= weights[i]; if (r < 0) return set[i]; }
+    return set[set.length - 1];
+  }
   function makeCall() {
     let c = pick(PREFIXES);
     if (!/\d$/.test(c)) c += Math.floor(Math.random() * 10);
@@ -709,19 +682,22 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
     switch (S.wordMode) {
       case "calls": return makeCall();
       case "abbr": return pick(ABBR);
-      case "chars": return pick(kochSet(S.lesson));
-      default: return pick(WORDS);
+      case "words": return pick(WORDS);
+      default: return pickChar();
     }
   }
   function setBoard(state, big, sub) {
-    const b = $("wordBoard");
-    b.className = "board" + (state ? " " + state : "");
+    $("wordBoard").className = "board" + (state ? " " + state : "");
     $("wordBig").textContent = big;
     $("wordSub").textContent = sub;
   }
+  function resetItem() {
+    stop(); clearTimeout(W.timer); W.item = null;
+    setBoard("", "? ? ?", "Press Play, listen, type what you heard, then Enter.");
+  }
   function newWord() {
     clearTimeout(W.timer);
-    W.item = nextItem(); W.answered = false;
+    W.item = nextItem(); W.last = W.item; W.answered = false;
     $("wordInput").value = "";
     setBoard("", "? ? ?", "Listening…");
     $("wordInput").focus();
@@ -732,88 +708,60 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
     const ans = $("wordInput").value.trim().toUpperCase();
     if (!ans) { play(W.item); return; }
     stop();
-    W.answered = true; W.tried++;
-    if (ans === W.item) {
-      W.ok++; W.streak++; W.best = Math.max(W.best, W.streak);
+    W.answered = true; D.tried++;
+    const correct = ans === W.item;
+    if (S.wordMode === "chars") {
+      const st = charStat(W.item);
+      if (correct) { st.hit++; st.w = 1 + (st.w - 1) * 0.6; }
+      else { st.miss++; st.w = Math.min(8, st.w + 2); }
+      renderLesson();
+    }
+    if (correct) {
+      D.ok++; D.streak++; D.best = Math.max(D.best, D.streak);
       setBoard("ok", W.item, "Correct");
       if (S.adaptive) { S.wpm = clamp(S.wpm + 1, 5, 60); if (S.eff >= S.wpm - 1) S.eff = S.wpm; syncSettings(); save(); }
-      W.timer = setTimeout(() => { if (W.answered && !$("p-words").hidden) newWord(); }, 700);
+      W.timer = setTimeout(() => { if (W.answered && !$("p-practice").hidden) newWord(); }, 700);
     } else {
-      W.streak = 0;
+      D.streak = 0;
       setBoard("no", W.item, `You typed ${ans}. Listen again, then press Enter for the next one.`);
       if (S.adaptive) { S.wpm = clamp(S.wpm - 1, 5, 60); S.eff = Math.min(S.eff, S.wpm); syncSettings(); save(); }
       play(W.item);
     }
-    $("stOk").textContent = W.ok; $("stTried").textContent = W.tried;
-    $("stStreak").textContent = W.streak; $("stBest").textContent = W.best;
+    saveDrill(); renderStats();
+  }
+  function renderStats() {
+    $("stOk").textContent = D.ok; $("stTried").textContent = D.tried;
+    $("stStreak").textContent = D.streak; $("stBest").textContent = D.best;
   }
   $("wordInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitWord(); } });
   $("wordPlay").addEventListener("click", () => { if (W.item && !W.answered) play(W.item); else newWord(); $("wordInput").focus(); });
   $("wordReplay").addEventListener("click", () => { if (W.item) play(W.item); $("wordInput").focus(); });
-  $("wordSkip").addEventListener("click", () => { if (W.item && !W.answered) { W.streak = 0; $("stStreak").textContent = 0; } newWord(); });
+  $("wordSkip").addEventListener("click", () => {
+    if (W.item && !W.answered) { D.streak = 0; saveDrill(); renderStats(); }
+    newWord();
+  });
   $("adaptive").addEventListener("change", e => { S.adaptive = e.target.checked; save(); });
   function renderMode() {
+    $("wordMode").hidden = !S.advanced;
     document.querySelectorAll("#wordMode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === S.wordMode)));
   }
   $("wordMode").addEventListener("click", e => {
     const b = e.target.closest("[data-mode]"); if (!b) return;
-    S.wordMode = b.dataset.mode; save(); renderMode();
-    stop(); clearTimeout(W.timer); W.item = null;
-    setBoard("", "? ? ?", "Press Play, listen, type what you heard, then Enter.");
+    S.wordMode = b.dataset.mode; save(); renderMode(); resetItem();
   });
 
-  // ---------- Play text ----------
-  function renderTape() {
-    const text = $("textInput").value;
-    let html = "", count = 0;
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i].toUpperCase();
-      if (/\s/.test(ch)) { if (!html.endsWith('gap"></span>')) html += `<span class="cell gap"></span>`; continue; }
-      const code = MORSE[ch];
-      if (!code) continue;
-      count++;
-      html += `<span class="cell" data-i="${i}"><span class="c">${esc(ch)}</span>${codeHTML(code)}</span>`;
-    }
-    $("tape").innerHTML = html || `<span class="muted small">Type something above to see it in Morse.</span>`;
-    const sc = schedule(text);
-    $("textInfo").textContent = count ? `${count} characters · about ${fmtTime(sc.total)} at ${S.wpm}/${Math.min(S.eff, S.wpm)} wpm. Characters without a Morse code are skipped.` : "";
-  }
-  $("textInput").addEventListener("input", renderTape);
-  $("textHide").addEventListener("change", e => { S.textHide = e.target.checked; save(); });
-  $("textPlay").addEventListener("click", () => {
-    renderTape();
-    const cells = new Map([...$("tape").querySelectorAll("[data-i]")].map(el => [Number(el.dataset.i), el]));
-    let cur = null, ci = 0;
-    $("textPlay").disabled = true; $("textStop").disabled = false;
-    if (S.textHide) $("tape").style.visibility = "hidden";
-    play($("textInput").value, {
-      onTick: (now, sc) => {
-        $("textBar").style.width = `${Math.min(100, (now / sc.total) * 100)}%`;
-        while (ci < sc.chars.length - 1 && sc.chars[ci + 1].t <= now) ci++;
-        const el = cells.get(sc.chars[ci].i);
-        if (el !== cur) { cur && cur.classList.remove("now"); el && el.classList.add("now"); cur = el; }
-      },
-      onEnd: () => {
-        cur && cur.classList.remove("now");
-        $("tape").style.visibility = "";
-        $("textPlay").disabled = false; $("textStop").disabled = true;
-      }
-    });
-  });
-  $("textStop").addEventListener("click", stop);
-
-  // ---------- Chart ----------
+  // ---------- chart ----------
   function renderChart() {
     const make = chars => chars.map(c => {
       const k = KOCH.indexOf(c);
-      const tag = PROSIGN[c] ? `<span class="lbl">${PROSIGN[c]}</span>` : k >= 0 ? `<span class="n">#${k + 1}</span>` : "";
+      const tag = PROSIGN[c] ? `<span class="lbl">${PROSIGN[c]}</span>` : k >= 0 ? `<span class="n">L${Math.max(1, k)}</span>` : "";
       return `<button class="key" data-ch="${esc(c)}" aria-label="Play ${esc(label(c))}">${tag}<span class="c">${esc(c)}</span>${codeHTML(MORSE[c])}</button>`;
     }).join("");
     $("chLetters").innerHTML = make(LETTERS.split(""));
     $("chNumbers").innerHTML = make("1234567890".split(""));
     $("chPunct").innerHTML = make(".,?/=+-'!():;@\"".split(""));
   }
-  document.querySelector("#p-chart").addEventListener("click", e => {
+  $("p-chart").addEventListener("click", e => {
     const b = e.target.closest(".key"); if (!b) return;
     document.querySelectorAll(".key.playing").forEach(k => k.classList.remove("playing"));
     b.classList.add("playing");
@@ -821,14 +769,19 @@ UR RST 599 599 NAME IS JOE QTH DENVER = HW? AR</textarea>
   });
 
   // ---------- init ----------
+  // v1.0 used different defaults: keep the user's lesson and sound settings, drop settings for removed features
+  if (!["chars", "words", "calls", "abbr"].includes(S.wordMode) || (!S.advanced && S.wordMode !== "chars")) S.wordMode = "chars";
+  delete S.grp; delete S.mins; delete S.textHide;
+  applyAccent();
   syncSettings();
   renderLesson();
-  renderHistory();
+  renderStats();
   renderMode();
   renderChart();
   $("adaptive").checked = S.adaptive;
-  $("textHide").checked = S.textHide;
-  showTab(["koch", "words", "text", "chart"].includes(S.tab) ? S.tab : "koch");
+  $("weighted").checked = S.weighted;
+  $("advanced").checked = S.advanced;
+  showTab(S.tab === "chart" ? "chart" : "practice");
 })();
 </script>
 </body>
