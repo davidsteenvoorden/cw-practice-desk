@@ -23,6 +23,8 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true); // settings and lesson history
         s.setMediaPlaybackRequiresUserGesture(false);
+        // Follow the phone's font size setting.
+        s.setTextZoom(Math.round(getResources().getConfiguration().fontScale * 100));
         web.setWebViewClient(new WebViewClient()); // keep navigation inside the app
         setContentView(web);
         // Keep the screen on during a copy session.

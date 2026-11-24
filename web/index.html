@@ -132,7 +132,7 @@ textarea.plain { text-transform: none; letter-spacing: 0.02em; }
 }
 .chip:hover { border-color: var(--muted); }
 .chip.new { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.chip.locked { opacity: 0.35; }
+.chip.locked { color: var(--muted); background: transparent; border-style: dashed; font-weight: 400; }
 
 .progress { height: 6px; background: var(--sunk); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
 .progress > div { height: 100%; width: 0%; background: var(--accent); }
@@ -206,21 +206,12 @@ input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px;
 .key:hover { border-color: var(--accent); }
 .key .c { font-family: var(--f-mono); font-weight: 600; font-size: 1.3rem; line-height: 1; }
 .key .code { color: var(--accent-ink); }
-.key .n { position: absolute; top: 8px; right: 9px; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.key .lbl { position: absolute; top: 9px; right: 9px; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.04em; }
+.key .n { position: absolute; top: 8px; right: 9px; font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.key .lbl { position: absolute; top: 8px; right: 9px; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.04em; }
 .key.playing { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .key.playing .code, .key.playing .n, .key.playing .lbl { color: var(--on-accent); }
 
 /* settings rack */
-.rack { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
-.rack summary {
-  list-style: none; cursor: pointer; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
-  font-family: var(--f-display); font-stretch: 85%; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-}
-.rack summary::-webkit-details-marker { display: none; }
-.rack summary::after { content: "+"; font-family: var(--f-mono); color: var(--muted); }
-.rack[open] summary::after { content: "−"; }
-.rack .body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 16px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field .lab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.9rem; font-weight: 700; }
 .field .val { font-family: var(--f-mono); font-weight: 600; color: var(--accent-ink); font-variant-numeric: tabular-nums; font-size: 0.9rem; }
@@ -252,15 +243,16 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 }
 .rack > * { max-width: 560px; margin-inline: auto; }
 .rack .body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
-.rack-head { padding: 8px 0 14px; }
-.rack-head h3 { font-size: 1.4rem; text-transform: uppercase; }
-.rack-close { font-size: 2rem; }
-.rack-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; }
-.rack-head h3 { color: var(--ink); font-size: 1rem; }
-.rack-close { background: none; border: 0; color: var(--muted); font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 2px 6px; }
-.rack-close:hover { color: var(--ink); }
-.chip.rated { box-shadow: inset 0 -4px 0 var(--rate); }
-.chip.new.rated { box-shadow: inset 0 -4px 0 var(--rate); }
+.rack .body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+.rack-head { display: flex; justify-content: space-between; align-items: center; padding: 4px 0 14px; }
+.rack-head h3 { color: var(--ink); font-size: 1.4rem; }
+.rack-close {
+  width: 44px; height: 44px; display: grid; place-items: center; margin-right: -8px;
+  background: none; border: 0; border-radius: 50%; color: var(--muted); font-size: 2rem; line-height: 1; cursor: pointer;
+}
+.rack-close:hover { color: var(--ink); background: var(--sunk); }
+/* hit-rate bar: length and colour both show the rate */
+.chip.rated { background-image: linear-gradient(var(--rate), var(--rate)); background-size: var(--pct) 4px; background-position: left bottom; background-repeat: no-repeat; }
 .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
 .swatch {
   width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
@@ -268,6 +260,86 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 }
 .swatch[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 3px var(--surface) inset; }
 .confirm { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 0.9rem; }
+
+/* v1.2: response, touch targets, motion */
+html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; } /* no double-tap-zoom delay */
+/* press feedback lands on touch-down, instantly */
+.btn, .chip, .key, .stepper button, .swatch, .gear, .rack-close, .tab, .seg button {
+  transition: transform 160ms cubic-bezier(.2, .8, .2, 1), background-color 120ms, border-color 120ms, color 120ms;
+}
+.btn:active, .chip:active, .key:active, .swatch:active, .gear:active, .rack-close:active, .seg button:active { transform: scale(0.95); transition-duration: 60ms; }
+.stepper button:active { background: var(--line); transform: scale(0.92); transition-duration: 60ms; }
+/* 44pt targets on touch */
+.chip { min-width: 40px; height: 40px; }
+.stepper button { width: 44px; height: 44px; }
+.btn { min-height: 44px; }
+.btn.sm { min-height: 36px; padding: 6px 12px; }
+.swatch { width: 40px; height: 40px; }
+.gear { position: relative; }
+.gear::after { content: ""; position: absolute; inset: -5px; } /* 44px hit area around the 34px button */
+/* settings toggles drawn as switches */
+label.switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; font-size: 0.95rem; }
+label.switch input {
+  appearance: none; -webkit-appearance: none; margin: 0; flex: none; cursor: pointer;
+  width: 50px; height: 30px; border-radius: 15px; background: var(--line); position: relative;
+  transition: background-color 200ms;
+}
+label.switch input::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+  transition: transform 260ms cubic-bezier(.3, 1.3, .5, 1);
+}
+label.switch input:checked { background: var(--accent); }
+label.switch input:checked::before { transform: translateX(20px); }
+.switch-text { display: flex; flex-direction: column; gap: 2px; }
+.switch-text .hint { font-size: 0.8rem; color: var(--muted); }
+.btn.danger { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
+/* settings page grows out of the gear and returns into it; CSS transitions reverse from the current value */
+.rack {
+  visibility: hidden; opacity: 0; transform: scale(0.94); transform-origin: calc(100% - 36px) 24px;
+  transition: opacity 180ms ease, transform 320ms cubic-bezier(.2, .9, .25, 1), visibility 0s linear 320ms;
+}
+.rack.open { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
+/* answer feedback: a short, precise change, no travelling motion */
+.board { transition: background-color 120ms, border-color 120ms; }
+.board .big { transition: transform 220ms cubic-bezier(.3, 1.4, .5, 1); }
+.board.ok .big { transform: scale(1.06); }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .chip, .key, .stepper button, .swatch, .gear, .rack-close, .tab, .seg button, .board .big { transition: background-color 120ms, border-color 120ms, color 120ms; }
+  .btn:active, .chip:active, .key:active, .swatch:active, .gear:active, .rack-close:active, .seg button:active, .stepper button:active, .board.ok .big { transform: none; }
+  .rack { transform: none; transition: opacity 160ms ease, visibility 0s linear 160ms; }
+  .rack.open { transition-delay: 0s; }
+  label.switch input::before { transition: none; }
+}
+/* keying page */
+#p-key { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.key-board-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.key-row { display: flex; justify-content: center; align-items: center; gap: 6px; min-height: 14px; }
+.key-row:empty { display: none; }
+.key-row i { display: block; height: 12px; border-radius: 6px; background: var(--line); }
+.key-row i.dit { width: 12px; }
+.key-row i.dah { width: 36px; }
+.key-row i.done { background: var(--good); }
+.key-row.mine i { background: var(--accent); }
+.key-row.mine i.wrong { background: var(--bad); }
+.board.no .key-row:not(.mine) i { background: var(--ink); } /* revealed answer reads clearly */
+.keyer {
+  height: 150px; width: 100%; border-radius: 18px; cursor: pointer; touch-action: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: var(--sunk); color: var(--ink); border: 2px solid var(--line);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  transition: transform 140ms cubic-bezier(.2, .8, .2, 1), background-color 60ms, border-color 60ms;
+}
+.keyer-label { font-family: var(--f-display); font-stretch: 80%; font-weight: 800; font-size: 2rem; letter-spacing: 0.12em; }
+.keyer-hint { font-size: 0.85rem; color: var(--muted); }
+.keyer.down { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: scale(0.98); transition-duration: 0s; }
+.keyer.down .keyer-hint { color: var(--on-accent); }
+@media (prefers-reduced-motion: reduce) { .keyer, .keyer.down { transform: none; } }
+
+@media (prefers-contrast: more) {
+  :root { --line: var(--muted); }
+  .chip.locked { color: var(--ink); }
+}
 </style>
 </head>
 <body>
@@ -290,6 +362,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" id="t-practice" data-tab="practice" aria-selected="true">Practice</button>
     <button class="tab" role="tab" id="t-chart" data-tab="chart" aria-selected="false">Code chart</button>
+    <button class="tab" role="tab" id="t-key" data-tab="key" aria-selected="false">Keying</button>
   </nav>
 
   <div class="layout">
@@ -343,10 +416,53 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
           <p class="muted small">Small labels show the level that adds each character.</p>
         </div>
       </section>
+      <!-- KEYING -->
+      <section class="panel" id="p-key" role="tabpanel" aria-labelledby="t-key" hidden>
+        <div class="card">
+          <div class="lesson-head">
+            <h2>Level</h2>
+            <div class="stepper">
+              <button id="keyLessonDown" aria-label="Previous level">−</button>
+              <output id="keyLessonNum">1</output>
+              <button id="keyLessonUp" aria-label="Next level">+</button>
+            </div>
+            <p class="muted small" id="keyLessonInfo"></p>
+          </div>
+          <div class="chips" id="keyChips"></div>
+        </div>
+
+        <div class="card">
+          <div class="board" id="keyBoard">
+            <div class="key-board-inner">
+              <div class="big" id="keyTarget">K</div>
+              <div class="key-row" id="keyHint" aria-label="How to key it"></div>
+              <div class="key-row mine" id="keyMine" aria-live="polite"></div>
+              <div class="muted small" id="keySub"></div>
+            </div>
+          </div>
+          <button class="keyer" id="keyer" aria-label="Morse key. Short press for a dot, long press for a dash.">
+            <span class="keyer-label">KEY</span>
+            <span class="keyer-hint" id="keyerHint">Short press: dot · Long press: dash</span>
+          </button>
+          <div class="row">
+            <button class="btn" id="keyHear">▶ Hear it</button>
+            <button class="btn" id="keyClear">Clear</button>
+            <button class="btn" id="keySkip">Skip</button>
+            <span class="spacer"></span>
+            <span class="status" id="keyTiming"></span>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="v" id="kOk">0</div><div class="k">Correct</div></div>
+            <div class="stat"><div class="v" id="kTried">0</div><div class="k">Tried</div></div>
+            <div class="stat"><div class="v" id="kStreak">0</div><div class="k">Streak</div></div>
+            <div class="stat"><div class="v" id="kBest">0</div><div class="k">Best streak</div></div>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <aside class="rack" id="rack" aria-label="Settings" hidden>
-      <div class="rack-head"><h3>Settings</h3><button class="rack-close" id="rackClose" aria-label="Close settings">×</button></div>
+    <aside class="rack" id="rack" role="dialog" aria-modal="true" aria-labelledby="rackTitle" inert>
+      <div class="rack-head"><h3 id="rackTitle">Settings</h3><button class="rack-close" id="rackClose" aria-label="Close settings">×</button></div>
       <div class="body">
         <div class="presets">
           <button class="btn sm" data-preset="20,8">Learn 20/8</button>
@@ -379,9 +495,17 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
           <div class="swatches" id="swatches" role="group" aria-label="Accent colour"></div>
         </div>
         <div class="divider"></div>
-        <label class="check"><input type="checkbox" id="weighted"> Practise weak letters more</label>
-        <span class="hint muted small">Letters you miss come up more often until you get them right.</span>
-        <label class="check"><input type="checkbox" id="advanced"> Advanced: more drill types</label>
+        <label class="switch"><span class="switch-text"><span>Practise weak letters more</span><span class="hint">Letters you miss come up more often until you get them right.</span></span><input type="checkbox" role="switch" id="weighted"></label>
+        <label class="switch"><span class="switch-text"><span>Vibrate on a miss</span><span class="hint">A short buzz when an answer is wrong. Phone only.</span></span><input type="checkbox" role="switch" id="vibrate"></label>
+        <label class="switch"><span class="switch-text"><span>Advanced: more drill types</span><span class="hint">Adds common words, callsigns and ham abbreviations.</span></span><input type="checkbox" role="switch" id="advanced"></label>
+        <div class="divider"></div>
+        <h3>Keying page</h3>
+        <label class="switch"><span class="switch-text"><span>Show hints</span><span class="hint">Shows the dots and dashes of each letter and lets you hear it first. Turn off to key from memory.</span></span><input type="checkbox" role="switch" id="keyHints"></label>
+        <div class="field">
+          <div class="lab"><label for="kwpm">Keying speed</label><span class="val" id="kwpmV"></span></div>
+          <input type="range" id="kwpm" min="5" max="30" step="1">
+          <span class="hint" id="kwpmHint"></span>
+        </div>
         <div class="divider"></div>
         <div class="confirm" id="resetBox">
           <button class="btn sm" id="resetStats">Reset stats</button>
@@ -414,22 +538,25 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   // accent themes: [accent, accent text, text on accent] for light and dark
   const ACCENTS = {
     amber:  { light: ["#e08a12", "#8c4d00", "#1c1204"], dark: ["#f2a23c", "#f6b766", "#1c1204"] },
-    green:  { light: ["#2e9e5b", "#1d6b3c", "#ffffff"], dark: ["#4cc77f", "#7fdba4", "#06170d"] },
-    teal:   { light: ["#14989a", "#0b6668", "#ffffff"], dark: ["#3cc4c6", "#7ad9da", "#041a1b"] },
-    blue:   { light: ["#2f7fd8", "#1b528f", "#ffffff"], dark: ["#5aa2f0", "#8cc0f7", "#06121f"] },
+    green:  { light: ["#27854c", "#1d6b3c", "#ffffff"], dark: ["#4cc77f", "#7fdba4", "#06170d"] },
+    teal:   { light: ["#118183", "#0b6668", "#ffffff"], dark: ["#3cc4c6", "#7ad9da", "#041a1b"] },
+    blue:   { light: ["#2c76c9", "#1b528f", "#ffffff"], dark: ["#5aa2f0", "#8cc0f7", "#06121f"] },
     violet: { light: ["#8a5cd6", "#5d3a99", "#ffffff"], dark: ["#a985f0", "#c6adf7", "#140a24"] },
-    red:    { light: ["#d9433a", "#9a2620", "#ffffff"], dark: ["#f06a5f", "#f7988f", "#1f0806"] },
-    pink:   { light: ["#d6457f", "#962656", "#ffffff"], dark: ["#f07aa8", "#f7a6c6", "#22070f"] }
+    red:    { light: ["#d24138", "#9a2620", "#ffffff"], dark: ["#f06a5f", "#f7988f", "#1f0806"] },
+    pink:   { light: ["#c94177", "#962656", "#ffffff"], dark: ["#f07aa8", "#f7a6c6", "#22070f"] }
   };
 
   // ---------- saved state ----------
-  const DEFAULTS = { wpm: 20, eff: 10, tone: 600, vol: 60, lesson: 1, tab: "practice", wordMode: "chars", adaptive: false, weighted: true, advanced: false, accent: "amber" };
+  const DEFAULTS = { wpm: 20, eff: 10, tone: 600, vol: 60, lesson: 1, tab: "practice", wordMode: "chars", adaptive: false, weighted: true, advanced: false, accent: "amber", vibrate: true, keyHints: true, kwpm: 12 };
   const S = Object.assign({}, DEFAULTS, load("cwdesk.settings", {}));
   // drill stats survive restarts: totals plus per-letter weight/hits/misses
   const D = Object.assign({ ok: 0, tried: 0, streak: 0, best: 0, chars: {} }, load("cwdesk.drill", {}));
   function load(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }
   function save() { try { localStorage.setItem("cwdesk.settings", JSON.stringify(S)); } catch {} }
   function saveDrill() { try { localStorage.setItem("cwdesk.drill", JSON.stringify(D)); } catch {} }
+  // keying page has its own stats: sending a letter is a different skill from recognising it
+  const KD = Object.assign({ ok: 0, tried: 0, streak: 0, best: 0, chars: {} }, load("cwdesk.key", {}));
+  function saveKey() { try { localStorage.setItem("cwdesk.key", JSON.stringify(KD)); } catch {} }
 
   const $ = id => document.getElementById(id);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -468,6 +595,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     if (ac.state === "suspended") ac.resume();
     return ac;
   }
+  window.addEventListener("pointerdown", () => audio(), { once: true, capture: true });
   const P = { token: 0, osc: null, gain: null, raf: 0, onEnd: null };
   const lamp = $("lamp");
 
@@ -483,7 +611,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     const g = ctx.createGain();
     g.gain.value = 0;
     osc.connect(g).connect(ctx.destination);
-    const t0 = ctx.currentTime + 0.08;
+    const t0 = ctx.currentTime + 0.03;
     const vol = (S.vol / 100) * 0.5;
     const r = Math.min(0.005, timings().dot / 4);
     g.gain.setValueAtTime(0, t0);
@@ -570,19 +698,28 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     S.wpm = w; S.eff = e; syncSettings(); save();
   }));
   $("testTone").addEventListener("click", () => play("PARIS"));
+  const isRackOpen = () => $("rack").classList.contains("open");
   function toggleRack(open) {
-    $("rack").hidden = !open;
+    $("rack").classList.toggle("open", open);
+    $("rack").inert = !open;
     $("gear").setAttribute("aria-expanded", String(open));
     document.body.style.overflow = open ? "hidden" : "";
     if (open) { stop(); $("rack").scrollTop = 0; }
   }
-  $("gear").addEventListener("click", () => toggleRack($("rack").hidden));
+  $("gear").addEventListener("click", () => toggleRack(!isRackOpen()));
   $("rackClose").addEventListener("click", () => toggleRack(false));
   // hooks for the Android wrapper: Back closes settings first, leaving the app stops sound
-  window.cwBack = () => { if ($("rack").hidden) return false; toggleRack(false); return true; };
-  window.cwStop = () => stop();
+  window.cwBack = () => { if (!isRackOpen()) return false; toggleRack(false); return true; };
+  window.cwStop = () => { stop(); keyRelease(true); };
 
   $("weighted").addEventListener("change", e => { S.weighted = e.target.checked; save(); });
+  $("vibrate").addEventListener("change", e => { S.vibrate = e.target.checked; save(); });
+  $("keyHints").addEventListener("change", e => { S.keyHints = e.target.checked; save(); renderLesson(); renderKey(); setKeyHintLine(); });
+  function setKeyHintLine() {
+    $("kwpmV").textContent = `${S.kwpm} wpm`;
+    $("kwpmHint").textContent = `A press longer than ${Math.round(dashAt() * 1000)} ms counts as a dash.`;
+  }
+  $("kwpm").addEventListener("input", e => { S.kwpm = parseInt(e.target.value, 10); save(); setKeyHintLine(); });
   $("advanced").addEventListener("change", e => {
     S.advanced = e.target.checked;
     if (!S.advanced && S.wordMode !== "chars") { S.wordMode = "chars"; resetItem(); }
@@ -592,7 +729,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   // reset with an in-page confirm step
   function renderReset(confirming) {
     $("resetBox").innerHTML = confirming
-      ? `<span>Clear all drill stats and letter history?</span><button class="btn sm primary" id="resetYes">Clear</button><button class="btn sm" id="resetNo">Cancel</button>`
+      ? `<span>Clear all stats and letter history on both pages?</span><button class="btn sm danger" id="resetYes">Clear stats</button><button class="btn sm" id="resetNo">Cancel</button>`
       : `<button class="btn sm" id="resetStats">Reset stats</button>`;
   }
   $("resetBox").addEventListener("click", e => {
@@ -601,7 +738,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     else if (id === "resetNo") renderReset(false);
     else if (id === "resetYes") {
       Object.assign(D, { ok: 0, tried: 0, streak: 0, best: 0, chars: {} });
-      saveDrill(); renderStats(); renderLesson(); renderReset(false);
+      Object.assign(KD, { ok: 0, tried: 0, streak: 0, best: 0, chars: {} });
+      saveDrill(); saveKey(); renderStats(); renderKeyStats(); renderLesson(); renderReset(false);
     }
   });
 
@@ -610,42 +748,58 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   function showTab(name) {
     stop();
     tabs.forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
-    ["practice", "chart"].forEach(n => $("p-" + n).hidden = n !== name);
+    ["practice", "chart", "key"].forEach(n => $("p-" + n).hidden = n !== name);
     S.tab = name; save();
+    if (name === "key") { if (!KS.target) newKeyLetter(); } else keyRelease(true);
   }
   tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
-  document.addEventListener("keydown", e => { if (e.key === "Escape") { stop(); if (!$("rack").hidden) toggleRack(false); } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { stop(); if (isRackOpen()) toggleRack(false); }
+    if (e.key === "," && (e.ctrlKey || e.metaKey)) { e.preventDefault(); toggleRack(!isRackOpen()); } // standard Settings shortcut
+  });
 
   // ---------- level ----------
   const kochSet = l => KOCH.slice(0, l + 1);
   function renderLesson() {
     S.lesson = clamp(S.lesson, 1, MAX_LESSON);
-    $("lessonNum").textContent = S.lesson;
     const set = kochSet(S.lesson);
-    $("lessonInfo").textContent = `${set.length} characters · new: ${label(set[set.length - 1])}`;
-    $("kochChips").innerHTML = KOCH.map((c, i) => {
+    const info = `${set.length} characters · new: ${label(set[set.length - 1])}`;
+    // the keying page lists only the level's letters, so the key stays within reach
+    [["", D.chars, "kochChips", true, false], ["key", KD.chars, "keyChips", S.keyHints, true]].forEach(([pre, stats, chipsId, showCode, levelOnly]) => {
+      const id = n => pre ? pre + n : n.charAt(0).toLowerCase() + n.slice(1);
+      $(id("LessonNum")).textContent = S.lesson;
+      $(id("LessonInfo")).textContent = info;
+      $(id("LessonDown")).disabled = S.lesson <= 1;
+      $(id("LessonUp")).disabled = S.lesson >= MAX_LESSON;
+      $(chipsId).innerHTML = chipsHTML(stats, showCode, levelOnly);
+    });
+  }
+  function chipsHTML(stats, showCode, levelOnly) {
+    return (levelOnly ? kochSet(S.lesson) : KOCH).map((c, i) => {
       let cls = i === S.lesson ? "chip new" : i < S.lesson ? "chip" : "chip locked";
-      let style = "", title = `${label(c)} ${MORSE[c]}`;
-      const st = D.chars[c];
+      let style = "", title = showCode ? `${label(c)} ${MORSE[c]}` : label(c);
+      const st = stats[c];
       const n = st ? st.hit + st.miss : 0;
       if (n >= 3) {
         const pct = Math.round((st.hit / n) * 100);
         cls += " rated";
-        style = ` style="--rate: color-mix(in srgb, var(--good) ${pct}%, var(--bad))"`;
+        style = ` style="--rate: color-mix(in srgb, var(--good) ${pct}%, var(--bad)); --pct: ${Math.max(8, pct)}%"`;
         title += ` · ${pct}% of ${n}`;
       }
-      return `<button class="${cls}"${style} data-ch="${esc(c)}" title="${esc(title)}">${esc(c)}</button>`;
+      return `<button class="${cls}"${style} data-ch="${esc(c)}" title="${esc(title)}" aria-label="${esc(title)}">${esc(c)}</button>`;
     }).join("");
-    $("lessonDown").disabled = S.lesson <= 1;
-    $("lessonUp").disabled = S.lesson >= MAX_LESSON;
   }
   $("kochChips").addEventListener("click", e => { const b = e.target.closest("[data-ch]"); if (b) play(b.dataset.ch); });
+  // with hints off, tapping a letter on the keying page would give the answer away
+  $("keyChips").addEventListener("click", e => { const b = e.target.closest("[data-ch]"); if (b && S.keyHints) play(b.dataset.ch); });
   function changeLesson(d) {
     S.lesson += d; renderLesson(); save();
     if (S.wordMode === "chars") resetItem();
+    if (KS.target) newKeyLetter();
   }
   $("lessonDown").addEventListener("click", () => changeLesson(-1));
   $("lessonUp").addEventListener("click", () => changeLesson(1));
+  $("keyLessonDown").addEventListener("click", () => changeLesson(-1));
+  $("keyLessonUp").addEventListener("click", () => changeLesson(1));
 
   // ---------- drill ----------
   const W = { item: null, last: null, answered: false, timer: 0 };
@@ -654,22 +808,26 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   // Weak-letter weighting: each letter has a weight (default 1, newest letter 3).
   // A miss adds 2 (max 8); a hit moves it 40% of the way back to 1.
   // Letters are drawn in proportion to weight, never the same one twice in a row.
-  function charStat(c) {
-    const set = kochSet(S.lesson);
-    return D.chars[c] || (D.chars[c] = { w: c === set[set.length - 1] ? 3 : 1, hit: 0, miss: 0 });
-  }
-  function pickChar() {
+  // Both pages use this with their own stats table.
+  function pickWeighted(stats, last) {
     const set = kochSet(S.lesson);
     const newest = set[set.length - 1];
     const weights = set.map(c => {
-      if (c === W.last && set.length > 1) return 0;
+      if (c === last && set.length > 1) return 0;
       if (!S.weighted) return 1;
-      return D.chars[c] ? D.chars[c].w : (c === newest ? 3 : 1);
+      return stats[c] ? stats[c].w : (c === newest ? 3 : 1);
     });
     let r = Math.random() * weights.reduce((a, b) => a + b, 0);
     for (let i = 0; i < set.length; i++) { r -= weights[i]; if (r < 0) return set[i]; }
     return set[set.length - 1];
   }
+  function scoreChar(stats, c, correct) {
+    const set = kochSet(S.lesson);
+    const st = stats[c] || (stats[c] = { w: c === set[set.length - 1] ? 3 : 1, hit: 0, miss: 0 });
+    if (correct) { st.hit++; st.w = 1 + (st.w - 1) * 0.6; }
+    else { st.miss++; st.w = Math.min(8, st.w + 2); }
+  }
+  const pickChar = () => pickWeighted(D.chars, W.last);
   function makeCall() {
     let c = pick(PREFIXES);
     if (!/\d$/.test(c)) c += Math.floor(Math.random() * 10);
@@ -710,12 +868,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     stop();
     W.answered = true; D.tried++;
     const correct = ans === W.item;
-    if (S.wordMode === "chars") {
-      const st = charStat(W.item);
-      if (correct) { st.hit++; st.w = 1 + (st.w - 1) * 0.6; }
-      else { st.miss++; st.w = Math.min(8, st.w + 2); }
-      renderLesson();
-    }
+    if (S.wordMode === "chars") { scoreChar(D.chars, W.item, correct); renderLesson(); }
     if (correct) {
       D.ok++; D.streak++; D.best = Math.max(D.best, D.streak);
       setBoard("ok", W.item, "Correct");
@@ -723,6 +876,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       W.timer = setTimeout(() => { if (W.answered && !$("p-practice").hidden) newWord(); }, 700);
     } else {
       D.streak = 0;
+      if (S.vibrate && navigator.vibrate) navigator.vibrate([25, 50, 25]);
       setBoard("no", W.item, `You typed ${ans}. Listen again, then press Enter for the next one.`);
       if (S.adaptive) { S.wpm = clamp(S.wpm - 1, 5, 60); S.eff = Math.min(S.eff, S.wpm); syncSettings(); save(); }
       play(W.item);
@@ -748,6 +902,144 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   $("wordMode").addEventListener("click", e => {
     const b = e.target.closest("[data-mode]"); if (!b) return;
     S.wordMode = b.dataset.mode; save(); renderMode(); resetItem();
+  });
+
+  // ---------- keying ----------
+  // A press shorter than 2 dot-lengths at the keying speed is a dot, longer is a dash.
+  // Each press is checked against the target right away; stopping halfway for a letter gap counts as a miss.
+  const KS = { target: null, last: null, keyed: "", state: "idle", down: false, downAt: 0, idle: 0, next: 0, osc: null, gain: null };
+  const unit = () => 1.2 / S.kwpm;
+  const dashAt = () => 2 * unit();
+  const gapLimit = () => Math.max(1.5, 7 * unit());
+
+  function patternHTML(code, doneCount) {
+    return code.split("").map((sym, i) => `<i class="${sym === "." ? "dit" : "dah"}${i < doneCount ? " done" : ""}"></i>`).join("");
+  }
+  function renderKey() {
+    const t = KS.target || "";
+    $("keyTarget").textContent = t;
+    const reveal = S.keyHints || KS.state === "miss";
+    const good = KS.state === "miss" ? 0 : KS.keyed.length;
+    $("keyHint").innerHTML = reveal && t ? patternHTML(MORSE[t], good) : "";
+    $("keyMine").innerHTML = KS.keyed.split("").map((sym, i) => {
+      const wrong = KS.state === "miss" && sym !== MORSE[t][i];
+      return `<i class="${sym === "." ? "dit" : "dah"}${wrong ? " wrong" : ""}"></i>`;
+    }).join("");
+    $("keyHear").hidden = !S.keyHints;
+  }
+  function setKeyBoard(state, sub) {
+    $("keyBoard").className = "board" + (state ? " " + state : "");
+    $("keySub").textContent = sub;
+  }
+  function newKeyLetter() {
+    clearTimeout(KS.idle); clearTimeout(KS.next);
+    KS.target = pickWeighted(KD.chars, KS.last); KS.last = KS.target;
+    KS.keyed = ""; KS.state = "keying";
+    setKeyBoard("", S.keyHints ? "Key this letter." : "Key this letter from memory.");
+    renderKey();
+  }
+  function judgeKey(correct) {
+    clearTimeout(KS.idle);
+    KS.state = correct ? "ok" : "miss";
+    KD.tried++;
+    scoreChar(KD.chars, KS.target, correct);
+    if (correct) {
+      KD.ok++; KD.streak++; KD.best = Math.max(KD.best, KD.streak);
+      setKeyBoard("ok", "Correct");
+      KS.next = setTimeout(() => { if (KS.state === "ok" && !$("p-key").hidden) newKeyLetter(); }, 700);
+    } else {
+      KD.streak = 0;
+      if (S.vibrate && navigator.vibrate) navigator.vibrate([25, 50, 25]);
+      setKeyBoard("no", "Not quite. This is how it goes. Press the key for the next letter.");
+      setTimeout(() => { if (KS.state === "miss") play(KS.target); }, 250);
+    }
+    renderKey(); renderLesson(); renderKeyStats(); saveKey();
+  }
+  function renderKeyStats() {
+    $("kOk").textContent = KD.ok; $("kTried").textContent = KD.tried;
+    $("kStreak").textContent = KD.streak; $("kBest").textContent = KD.best;
+  }
+
+  function toneOn() {
+    const ctx = audio();
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.frequency.value = S.tone;
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime((S.vol / 100) * 0.5, ctx.currentTime + 0.005);
+    osc.connect(g).connect(ctx.destination);
+    osc.start();
+    KS.osc = osc; KS.gain = g;
+    lamp.classList.add("on");
+  }
+  function toneOff() {
+    if (!KS.osc) return;
+    const t = ac.currentTime;
+    KS.gain.gain.cancelScheduledValues(t);
+    KS.gain.gain.setValueAtTime(KS.gain.gain.value, t);
+    KS.gain.gain.linearRampToValueAtTime(0, t + 0.005);
+    KS.osc.stop(t + 0.02);
+    KS.osc = null; KS.gain = null;
+    lamp.classList.remove("on");
+  }
+  function keyPress() {
+    if (KS.down) return;
+    KS.down = true; KS.downAt = performance.now();
+    $("keyer").classList.add("down");
+    stop();
+    clearTimeout(KS.idle);
+    // after a result, the press only moves on to the next letter
+    if (KS.state === "miss" || KS.state === "ok" || !KS.target) { KS.down = "skip"; return; }
+    toneOn();
+  }
+  function keyRelease(cancel) {
+    if (!KS.down) return;
+    const skip = KS.down === "skip";
+    KS.down = false;
+    $("keyer").classList.remove("down");
+    toneOff();
+    if (skip) { if (!cancel) newKeyLetter(); return; }
+    if (cancel || KS.state !== "keying") return;
+    const secs = (performance.now() - KS.downAt) / 1000;
+    const sym = secs >= dashAt() ? "-" : ".";
+    $("keyTiming").textContent = `${Math.round(secs * 1000)} ms ${sym === "." ? "dot" : "dash"}`;
+    KS.keyed += sym;
+    const code = MORSE[KS.target];
+    if (!code.startsWith(KS.keyed)) judgeKey(false);
+    else if (KS.keyed === code) judgeKey(true);
+    else {
+      renderKey();
+      KS.idle = setTimeout(() => { if (KS.state === "keying" && KS.keyed) judgeKey(false); }, gapLimit() * 1000);
+    }
+  }
+  const keyer = $("keyer");
+  keyer.addEventListener("pointerdown", e => {
+    if (e.button > 0) return;
+    e.preventDefault();
+    try { keyer.setPointerCapture(e.pointerId); } catch {}
+    keyPress();
+  });
+  keyer.addEventListener("pointerup", () => keyRelease(false));
+  keyer.addEventListener("pointercancel", () => keyRelease(true));
+  keyer.addEventListener("contextmenu", e => e.preventDefault());
+  // Space is the key on a keyboard
+  document.addEventListener("keydown", e => {
+    if (e.code !== "Space" || $("p-key").hidden || isRackOpen() || e.target.closest("input, textarea")) return;
+    e.preventDefault();
+    if (!e.repeat) keyPress();
+  });
+  document.addEventListener("keyup", e => {
+    if (e.code !== "Space" || $("p-key").hidden || isRackOpen()) return;
+    e.preventDefault(); keyRelease(false);
+  });
+  window.addEventListener("blur", () => keyRelease(true));
+  $("keyHear").addEventListener("click", () => { if (KS.target) play(KS.target); });
+  $("keyClear").addEventListener("click", () => {
+    if (KS.state !== "keying") return;
+    clearTimeout(KS.idle); KS.keyed = ""; $("keyTiming").textContent = ""; renderKey();
+  });
+  $("keySkip").addEventListener("click", () => {
+    if (KS.state === "keying" && KS.target) { KD.streak = 0; saveKey(); renderKeyStats(); }
+    newKeyLetter();
   });
 
   // ---------- chart ----------
@@ -780,8 +1072,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   renderChart();
   $("adaptive").checked = S.adaptive;
   $("weighted").checked = S.weighted;
+  $("vibrate").checked = S.vibrate;
   $("advanced").checked = S.advanced;
-  showTab(S.tab === "chart" ? "chart" : "practice");
+  $("keyHints").checked = S.keyHints;
+  $("kwpm").value = S.kwpm;
+  setKeyHintLine();
+  renderKeyStats();
+  showTab(["chart", "key"].includes(S.tab) ? S.tab : "practice");
 })();
 </script>
 </body>

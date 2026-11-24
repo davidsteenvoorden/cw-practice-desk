@@ -4,6 +4,7 @@ A free Morse code (CW) trainer for Android and Linux, inspired by [LCWO](https:/
 
 <p>
   <img src="docs/phone.png" alt="Practice screen on a phone" height="420">
+  <img src="docs/keying.png" alt="Keying screen on a phone" height="420">
   <img src="docs/settings.png" alt="Settings screen on a phone" height="420">
   <img src="docs/desktop.png" alt="Practice screen on the desktop" height="420">
 </p>
@@ -16,20 +17,30 @@ All versions are on the [Releases page](https://github.com/davidsteenvoorden/cw-
 
 ## What it does
 
-The app has two tabs, **Practice** and **Code chart**, plus a settings screen behind the gear button.
+The app has three tabs, **Practice**, **Code chart** and **Keying**, plus a settings screen behind the gear button. Ctrl+, opens settings on a computer.
 
 ### Practice
 
 - **Level.** Pick a level with − and +. Levels follow LCWO's 40-lesson Koch order: level 1 is K and M, and each level adds one character. The newest character is highlighted. Tap any character to hear it.
 - **Letter drill.** Press Play, listen to one character from your level, type it and press Enter. Correct answers move on by themselves. After a miss, the app shows the right answer and plays it again; press Enter for the next one. Press Enter on an empty box to replay.
 - **Practise weak letters more.** Every character has a weight that starts at 1, or 3 for the newest character. Each miss adds 2, up to 8. Each correct answer moves the weight 40% of the way back to 1. The next character is drawn in proportion to these weights, and never the same one twice in a row. You can turn this off in settings.
-- **Hit-rate bars.** Once you've answered a character 3 times, its button gets a coloured bar from red to green showing how often you get it right.
+- **Hit-rate bars.** Once you've answered a character 3 times, its button gets a bar showing how often you get it right. The bar gets longer and turns from red to green as you improve.
 - **Stats.** Correct, tried, streak and best streak. They are saved after every answer, so they survive closing the app.
 - **Adaptive speed.** When it's on, each correct answer adds 1 wpm and each miss takes 1 away.
 
 ### Code chart
 
 Every letter, number, punctuation mark and prosign with its code. Each one is labelled with the level that adds it, and you can tap it to hear it.
+
+### Keying
+
+Practise sending. The app shows a letter from your level and you key it on one big button: a short press is a dot and a long press is a dash. You hear a sidetone while you hold the button. On a computer, the Space bar works as the key.
+
+- **Dot or dash.** A press longer than 2 dot-lengths at the keying speed counts as a dash. At the default 12 wpm that's 200 ms. After each press, the app shows how long it was, so you can tune the speed to your hand.
+- **Checked as you go.** Each press is compared with the letter straight away. Complete the letter and it counts as correct. If a press doesn't fit, it counts as a miss: the app shows the right pattern, plays it, and marks your wrong press in red. If you stop halfway for longer than a letter gap (about 1.5 seconds), that's a miss too. Press the key again to move on.
+- **Hints.** With hints on, you see the dots and dashes of the letter and they fill in as you key, and **Hear it** plays the letter first. Turn hints off in settings to key from memory. The pattern then only appears after a miss.
+- **Same level, own statistics.** The keying page uses the same level as Practice and lists only that level's letters. Weak letters come up more often here too, but sending and recognising are tracked separately, with their own streaks and hit-rate bars.
+- **Clear** wipes a half-keyed letter and **Skip** gives you a different one.
 
 ### Settings
 
@@ -40,13 +51,16 @@ Every letter, number, punctuation mark and prosign with its code. Each one is la
 | Tone | 300–1200 Hz | Pitch of the sidetone |
 | Volume | 0–100% | |
 | Accent colour | 7 colours | Changes the highlight colour, in both light and dark mode |
-| Practise weak letters more | on / off | Turns the weighting described above on or off |
+| Practise weak letters more | on / off | Turns the weighting described above on or off, on both pages |
+| Vibrate on a miss | on / off | A short double buzz when an answer is wrong (Android only) |
 | Advanced: more drill types | on / off | Adds drills for common words, callsigns (W1ABC, DL3XY, S52AB…) and ham abbreviations (CQ, QTH, RST, 73…) |
-| Reset stats | | Clears your stats and per-letter history. It asks you to confirm first |
+| Show hints (keying) | on / off | Shows each letter's dots and dashes on the keying page. Off: key from memory |
+| Keying speed | 5–30 wpm | Sets how long a press must be to count as a dash on the keying page |
+| Reset stats | | Clears the stats and per-letter history of both pages. It asks you to confirm first |
 
 Timing follows the PARIS standard: one dit lasts 1.2 / wpm seconds. Farnsworth gaps use the ARRL formula. Each tone fades in and out over 5 ms, so there are no key clicks.
 
-Everything is saved on the device. Nothing is ever sent anywhere, and the app requests no permissions.
+Everything is saved on the device and nothing is ever sent anywhere. On Android, the only permission is vibration, for the buzz on a miss; Android grants it at install without asking. The app follows your phone's font size setting.
 
 ## Installing on Android
 
